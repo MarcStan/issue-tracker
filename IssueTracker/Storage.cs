@@ -38,7 +38,7 @@ namespace IssueTracker
             {
                 var comment = issue.Comments[i];
                 int id = i + 1;
-                var file = $"comment-{id:000}.txt";
+                var file = $"comment-{id:000}.ini";
                 File.WriteAllLines(Path.Combine(tDir, file), new[]
                 {
                     "[Comment]",
@@ -109,7 +109,7 @@ namespace IssueTracker
             for (int i = 0; i < commentCount; i++)
             {
                 var cid = i + 1;
-                var c = LoadComment(Path.Combine(directory, $"comment-{cid:000}.txt"));
+                var c = LoadComment(Path.Combine(directory, $"comment-{cid:000}.ini"));
                 comments.Add(c);
             }
             int changeIndex = int.Parse(sec.Keys["LastStateChangeCommentIndex"].Value);

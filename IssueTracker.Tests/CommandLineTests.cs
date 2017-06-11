@@ -168,15 +168,58 @@ namespace IssueTracker.Tests
                 "PostDate=131416916119635597",
                 "Author=Contoso",
                 "State=Open",
-                "CommentCount = 0",
-                "LastStateChangeCommentIndex = -1"
+                "CommentCount=0",
+                "LastStateChangeCommentIndex=-1"
             };
             File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
 
             var arguments = new[] { "close", "1" };
 
             var args = ExecuteTestCommand(path, arguments);
-            // if no filters are provided a default filter of "open issues only" is applied
+
+            args.Should().ContainKey("id");
+            args["id"].Should().Be(1);
+
+            Directory.Delete(path, true);
+        }
+
+        [Test]
+        public void TestReopenCommand()
+        {
+            // setup
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path, ".issues"), "");
+            Directory.CreateDirectory(Path.Combine(path, "#1"));
+            var text = new[]
+            {
+                "[Issue]",
+                "Title=hello",
+                "Message=",
+                "Tags=",
+                "PostDate=131416916119635597",
+                "Author=Contoso",
+                "State=Open",
+                "CommentCount=0",
+                "LastStateChangeCommentIndex=-1"
+            };
+            var close = new[]
+            {
+                "[Comment]",
+                "Message = Closed the issue.",
+                "CommentDate=131416926100176451",
+                "Author=Contoso",
+                "Editable=False",
+                "ChangedStateTo=Closed"
+            };
+            File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
+            File.WriteAllLines(Path.Combine(path, "#1\\comment-001.ini"), close);
+
+            var arguments = new[] { "reopen", "1" };
+
+            var args = ExecuteTestCommand(path, arguments);
+
             args.Should().ContainKey("id");
             args["id"].Should().Be(1);
 
