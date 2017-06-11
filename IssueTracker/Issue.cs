@@ -44,7 +44,7 @@ namespace IssueTracker
             Tags = tags ?? new Tag[0];
             CreationDate = creationDate;
             Author = author;
-            Comments = comments ?? new List<Comment>();
+            _comments = comments ?? new List<Comment>();
             State = state;
             LastStateChangeCommentIndex = lastStateChangeCommentIndex;
         }
@@ -84,7 +84,7 @@ namespace IssueTracker
         /// A list of comments that have been added to this issue.
         /// Is never null but may be empty.
         /// </summary>
-        public IReadOnlyList<Comment> Comments { get; }
+        public IReadOnlyList<Comment> Comments => _comments;
 
         /// <summary>
         /// The current state of the issue.
