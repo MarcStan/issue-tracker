@@ -7,7 +7,7 @@
     {
         /// <summary>
         /// Filter based on tag.
-        /// The filter value will be a string (tag name).
+        /// The filter value will be a Tag[] with at least one element.
         /// </summary>
         Tag,
         /// <summary>
