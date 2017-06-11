@@ -124,7 +124,6 @@ namespace IssueTracker
         {
             AssertIssueTracker();
 
-            // TODO: inefficient to always load all isses when adding a new issue. maybe store ID in .issues file
             var all = Storage.LoadIssues();
             var maxId = all.Any() ? all.Max(i => i.Id) : 0;
             var issue = new Issue(maxId + 1, title, message, tags, DateTime.Now, CurrentUser, null, IssueState.Open, -1);
@@ -199,7 +198,16 @@ namespace IssueTracker
         /// <param name="message"></param>
         public virtual void CommentIssue(int id, string message)
         {
-            throw new NotImplementedException();
+            var issues = Storage.LoadIssues();
+            var issue = issues.FirstOrDefault(i => i.Id == id);
+            if (issue == null)
+            {
+                Console.WriteLine($"No issue with id '#{id}' found!");
+                return;
+            }
+            issue.Add(new Comment(message, CurrentUser, DateTime.Now, true));
+            Storage.SaveIssue(issue, false);
+            Console.WriteLine("Comment added!");
         }
 
         /// <summary>
