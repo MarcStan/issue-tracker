@@ -260,6 +260,11 @@ namespace IssueTracker
 
                 filters.Add(new FilterValue(Filter.IssueState, s));
             }
+            else
+            {
+                // default to open issues by default
+                filters.Add(new FilterValue(Filter.IssueState, IssueState.Open));
+            }
             issueTracker.ListIssues(filters);
         }
 
