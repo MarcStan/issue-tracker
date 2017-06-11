@@ -368,7 +368,16 @@ namespace IssueTracker
             // use same format as list for the header
             PrintIssueList(new List<Issue> { issue }, true);
             // breakline
-            var wrap = new string('_', Console.BufferWidth);
+
+            int width;
+            if (!ConsoleEx.GetConsoleWindowWidth(out width))
+            {
+                //only the case for unit tests, due to no attached console
+                // but return sane default anyway
+                width = 80;
+            }
+
+            var wrap = new string('_', width);
             Console.WriteLine(wrap);
 
             // optional message
