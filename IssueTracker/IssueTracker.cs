@@ -48,7 +48,7 @@ namespace IssueTracker
                 return;
             }
             var user = CurrentUser;
-            File.WriteAllText(RootFile, $"owner={user}");
+            File.WriteAllText(Path.Combine(_workingDirectory, RootFile), $"owner={user}");
 
             Console.WriteLine($"New issue project created for owner {user}!");
         }
