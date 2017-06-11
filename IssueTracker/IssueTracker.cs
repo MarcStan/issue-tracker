@@ -168,34 +168,57 @@ namespace IssueTracker
             }
             // tags are now unique, order of add/remove doesn't matter anymore
             var currentTags = issue.Tags.ToList();
+            var addedTags = new List<Tag>();
+            var removedTags = new List<Tag>();
             foreach (var t in add)
             {
                 if (!currentTags.Contains(t))
+                {
                     currentTags.Add(t);
+                    addedTags.Add(t);
+                }
+                else
+                {
+                    Console.WriteLine($"Tag '{t}' already exists!");
+                }
             }
             foreach (var t in remove)
             {
                 if (currentTags.Contains(t))
+                {
                     currentTags.Remove(t);
+                    removedTags.Add(t);
+                }
+                else
+                {
+                    Console.WriteLine($"Tag '{t}' does not exist!");
+                }
             }
             string message = "";
-            if (add.Length > 0)
+            if (addedTags.Count > 0)
             {
-                message += $"Added tag{(add.Length > 1 ? "(s)" : "")}: {string.Join(", ", add.ToList())}.";
+                message += $"Added tag{(addedTags.Count > 1 ? "(s)" : "")}: {string.Join(", ", addedTags)}.";
             }
-            if (remove.Length > 0)
+            if (removedTags.Count > 0)
             {
                 if (!string.IsNullOrEmpty(message))
                     message += Environment.NewLine;
 
-                message += $"Removed tag{(remove.Length > 1 ? "(s)" : "")}: {string.Join(", ", remove.ToList())}.";
+                message += $"Removed tag{(addedTags.Count > 1 ? "(s)" : "")}: {string.Join(", ", removedTags)}.";
             }
-            issue.Add(new Comment(message, CurrentUser, DateTime.Now, false));
+            if (addedTags.Any() || removedTags.Any())
+            {
+                issue.Add(new Comment(message, CurrentUser, DateTime.Now, false));
 
-            issue.Tags = currentTags.ToArray();
+                issue.Tags = currentTags.ToArray();
 
-            Storage.SaveIssue(issue, false);
-            Console.WriteLine(message);
+                Storage.SaveIssue(issue, false);
+                Console.WriteLine(message);
+            }
+            else
+            {
+                Console.WriteLine("No changes where made!");
+            }
         }
 
         /// <summary>
