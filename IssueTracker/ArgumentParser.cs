@@ -49,9 +49,6 @@ namespace IssueTracker
             if (issueTracker == null)
                 throw new ArgumentNullException(nameof(issueTracker));
 
-            var newArgs = ConvertArgumentsIntoAcceptableFormat(args, 1);
-            args = newArgs;
-
             var parser = new CommandLineParser.CommandLineParser
             {
                 AcceptEqualSignSyntaxForValueArguments = true
@@ -63,6 +60,9 @@ namespace IssueTracker
             parser.Arguments.Add(_commentOnIssue);
             parser.Arguments.Add(_user);
             parser.Arguments.Add(_stateArgument);
+
+            var newArgs = ConvertArgumentsIntoAcceptableFormat(args, parser.Arguments.ToArray(), 1);
+            args = newArgs;
             try
             {
                 // we asserted that there is at least one argument
@@ -123,15 +123,19 @@ namespace IssueTracker
         /// </summary>
         /// <param name="args"></param>
         /// <param name="skipProcessingForFirstNValues">Optional. Allows skipping processing values from the start. Affected values will be copied literally.</param>
-        private static string[] ConvertArgumentsIntoAcceptableFormat(string[] args, int skipProcessingForFirstNValues = 0)
+        private static string[] ConvertArgumentsIntoAcceptableFormat(string[] args, Argument[] supportedArgs, int skipProcessingForFirstNValues = 0)
         {
             var newArgs = new string[args.Length];
             var states = _stateArgument.AllowedValues.ToList();
+            bool lastValueWasArgumentRequiringUserValue = false;
             for (int i = 0; i < args.Length; i++)
             {
-                if (i < skipProcessingForFirstNValues)
+                // just copy the skip values
+                // also copy the values when the lastValueWasArgumentRequiringUserValue is true, it indicates e.g. "-t", "my message" -> prevents "my message" from being appended with "--"
+                if (i < skipProcessingForFirstNValues || lastValueWasArgumentRequiringUserValue)
                 {
                     newArgs[i] = args[i];
+                    lastValueWasArgumentRequiringUserValue = false;
                     continue;
                 }
                 var current = args[i].Replace(":", "=");
@@ -154,6 +158,42 @@ namespace IssueTracker
                     }
                 }
                 newArgs[i] = current;
+
+                if (!current.Contains("=") &&
+                    (current.StartsWith("-") || current.StartsWith("/")))
+                {
+                    // special case, if the last value was a switch that requires a value (e.g. "-t" "my message")
+                    // and the value wasn't integrated (e.g. "-t=my message") then we need to skip the next value, otherwise we end up with "-t" "--my message".
+
+                    // check if we have any argument with a matching name and only then skip modifications
+                    var argumentNameOnly = current;
+                    if (argumentNameOnly.StartsWith("--"))
+                        argumentNameOnly = argumentNameOnly.Substring(2);
+                    else if (argumentNameOnly.StartsWith("-") || argumentNameOnly.StartsWith("/"))
+                        argumentNameOnly = argumentNameOnly.Substring(1);
+
+                    // now without the prefix and possible value check match any of the user providable arguments
+                    var match = supportedArgs.FirstOrDefault(
+                        a => argumentNameOnly.Equals(a.LongName, StringComparison.InvariantCultureIgnoreCase) ||
+                             (a.ShortName.HasValue && argumentNameOnly[0] == a.ShortName.Value));
+                    if (match != null)
+                    {
+                        // since we found a match, we need to check whether the provided argument is a switch or not
+                        // if it is a switch it means it doesn't require a value
+                        // all other arguments should require a value
+                        var t = match.GetType();
+                        // fickle logic: this might break if someone decides to create another argument not of type switch and makes it implement switch
+                        // but who would do such a retarded thing?
+                        if (t == typeof(SwitchArgument) || t.IsSubclassOf(typeof(SwitchArgument)))
+                        {
+                        }
+                        else
+                        {
+                            // not a switch so it must be a value argument (tm)
+                            lastValueWasArgumentRequiringUserValue = true;
+                        }
+                    }
+                }
             }
             return newArgs.ToArray();
         }
