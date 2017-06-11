@@ -66,6 +66,11 @@ namespace IssueTracker
 
             AssertIssueTracker();
 
+            // forbid duplicate filters, as they are pointless. E.g. 2x filter user will always return 0 results when there are 2 different names
+            // same for issue state
+            if (filters.Select(f => f.FilterType).Distinct().Count() != filters.Count)
+                throw new NotSupportedException("Each filter type may only be used once!");
+
             var issues = _storage.LoadIssues();
             bool stateWasFiltered = false;
             foreach (var f in filters)

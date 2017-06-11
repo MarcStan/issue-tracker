@@ -173,6 +173,29 @@ namespace IssueTracker.Tests.Integration
                 {
                     new FilterValue(Filter.IssueState, IssueState.Open)
                 })).ShouldNotThrow();
+                new Action(() => it.ListIssues(new List<FilterValue>
+                {
+                    new FilterValue(Filter.User, "me")
+                })).ShouldNotThrow();
+                new Action(() => it.ListIssues(new List<FilterValue>
+                {
+                    new FilterValue(Filter.Tag, new [] {new Tag("bug")})
+                })).ShouldNotThrow();
+
+                // also check multi filter
+                new Action(() => it.ListIssues(new List<FilterValue>
+                {
+                    new FilterValue(Filter.IssueState, IssueState.Open),
+                    new FilterValue(Filter.User, "me"),
+                    new FilterValue(Filter.Tag, new [] {new Tag("bug")})
+                })).ShouldNotThrow();
+
+                // multiple filters of same type are forbidden
+                new Action(() => it.ListIssues(new List<FilterValue>
+                {
+                    new FilterValue(Filter.IssueState, IssueState.Open),
+                    new FilterValue(Filter.IssueState, IssueState.Closed)
+                })).ShouldThrow<NotSupportedException>();
             });
         }
 
@@ -198,6 +221,12 @@ namespace IssueTracker.Tests.Integration
                 var it = SetupIssueTrackerWithIssues(path);
 
                 // can't really test much appart from no crash because it just prints to console
+                new Action(() => it.ShowIssue(1)).ShouldNotThrow();
+
+                it.CommentIssue(1, "foobar");
+                it.CommentIssue(1, "blub");
+
+                // still shouldn't throw when it has to display comments
                 new Action(() => it.ShowIssue(1)).ShouldNotThrow();
             });
         }
