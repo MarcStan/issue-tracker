@@ -111,7 +111,14 @@ namespace IssueTracker
         /// <param name="id"></param>
         public virtual void ShowIssue(int id)
         {
-            throw new NotImplementedException();
+            var issues = Storage.LoadIssues();
+            var issue = issues.FirstOrDefault(i => i.Id == id);
+            if (issue == null)
+            {
+                Console.WriteLine($"No issue with id '#{id}' found!");
+                return;
+            }
+            DisplayIssue(issue);
         }
 
         /// <summary>
@@ -311,6 +318,59 @@ namespace IssueTracker
             });
             Storage.SaveIssue(issue, false);
             Console.WriteLine($"Issue '#{id}' {targetState.ToString().ToLower()}!", ConsoleColor.Green);
+        }
+
+        /// <summary>
+        /// Displays the provided issue and all its comments.
+        /// </summary>
+        /// <param name="issue"></param>
+        private static void DisplayIssue(Issue issue)
+        {
+            // use same format as list for the header
+            PrintIssueList(new List<Issue> { issue }, true);
+            // breakline
+            var wrap = new string('_', Console.BufferWidth);
+            Console.WriteLine(wrap);
+
+            // optional message
+            if (!string.IsNullOrWhiteSpace(issue.Message))
+                Console.WriteLine(issue.Message);
+
+            // format comments in a readable fashion
+            var lines = new List<string[]>();
+            for (int i = 0; i < issue.Comments.Count; i++)
+            {
+                var c = issue.Comments[i];
+                var time = c.DateTime;
+                string ts;
+                if (time.Date == issue.CreationDate.Date)
+                {
+                    // same day, just timestamp is fine
+                    ts = time.ToShortTimeString();
+                }
+                else
+                {
+                    if ((time - issue.CreationDate).TotalDays > 7)
+                    {
+                        // anything older than a week just needs day
+                        ts = time.ToShortDateString();
+                    }
+                    else
+                    {
+                        // full date needed
+                        ts = time.ToString();
+                    }
+                }
+                lines.Add(new[]
+                {
+                    c.Author,
+                    "@ " + ts + ":",
+                    c.Message
+                });
+            }
+            var formatted = ConsoleFormatter.PadElementsInLines(lines);
+            formatted = formatted.Replace(Environment.NewLine, Environment.NewLine + Environment.NewLine + wrap);
+            Console.WriteLine(formatted);
         }
     }
 }
