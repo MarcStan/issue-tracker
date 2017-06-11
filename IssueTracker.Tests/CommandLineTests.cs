@@ -126,6 +126,30 @@ namespace IssueTracker.Tests
             Directory.Delete(path, true);
         }
 
+        [Test]
+        public void TestAddCommand()
+        {
+            // setup
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path, ".issues"), "");
+
+            var arguments = new[] { "add", "-t", "hello world", "-m", "foobar", "tag:bug" };
+
+            var args = ExecuteTestCommand(path, arguments);
+            // if no filters are provided a default filter of "open issues only" is applied
+            args.Should().ContainKey("title");
+            args.Should().ContainKey("message");
+            args.Should().ContainKey("tags");
+
+            args["title"].Should().Be("hello world");
+            args["message"].Should().Be("foobar");
+            ((Tag[])args["tags"]).Should().Contain(new Tag("bug"));
+
+            Directory.Delete(path, true);
+        }
+
         /// <summary>
         /// Helper method that executes the commands using the <see cref="MockIssueTracker"/> and reports back the values it returned.
         /// </summary>
