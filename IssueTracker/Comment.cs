@@ -13,8 +13,18 @@ namespace IssueTracker
         /// <param name="message"></param>
         /// <param name="author"></param>
         /// <param name="dateTime"></param>
+        public Comment(string message, string author, DateTime dateTime) : this(message, author, dateTime, true)
+        {
+        }
+
+        /// <summary>
+        /// Adds a comment that can optionally no longer be editable.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="author"></param>
+        /// <param name="dateTime"></param>
         /// <param name="editable"></param>
-        public Comment(string message, string author, DateTime dateTime, bool editable)
+        internal Comment(string message, string author, DateTime dateTime, bool editable)
         {
             Message = message;
             Author = author;

@@ -10,7 +10,33 @@ namespace IssueTracker
     {
         private readonly List<Comment> _comments = new List<Comment>();
 
-        public Issue(int id, string title, string message, Tag[] tags, DateTime creationDate, string author, List<Comment> comments, IssueState state, int lastStateChangeCommentIndex)
+        /// <summary>
+        /// Creates a new issue with the provided values.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="title"></param>
+        /// <param name="message"></param>
+        /// <param name="tags"></param>
+        /// <param name="creationDate"></param>
+        /// <param name="author"></param>
+        public Issue(int id, string title, string message, Tag[] tags, DateTime creationDate, string author) : this(id, title, message, tags, creationDate, author, null, IssueState.Open, -1)
+        {
+        }
+
+        /// <summary>
+        /// Internal.
+        /// Used to load issues from disk.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="title"></param>
+        /// <param name="message"></param>
+        /// <param name="tags"></param>
+        /// <param name="creationDate"></param>
+        /// <param name="author"></param>
+        /// <param name="comments"></param>
+        /// <param name="state"></param>
+        /// <param name="lastStateChangeCommentIndex"></param>
+        internal Issue(int id, string title, string message, Tag[] tags, DateTime creationDate, string author, List<Comment> comments, IssueState state, int lastStateChangeCommentIndex)
         {
             Id = id;
             Title = title;

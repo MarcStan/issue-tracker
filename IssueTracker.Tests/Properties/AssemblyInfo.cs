@@ -1,13 +1,11 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("IssueTracker")]
+[assembly: AssemblyTitle("IssueTracker.Tests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyProduct("IssueTracker")]
+[assembly: AssemblyProduct("IssueTracker.Tests")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
-[assembly: Guid("67163aaa-6ecf-476b-adba-a8d794c2c935")]
-[assembly: InternalsVisibleTo("IssueTracker.Tests")]
+[assembly: Guid("5436e82f-9013-441f-8e7f-5814388e5559")]
