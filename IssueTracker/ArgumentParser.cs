@@ -122,6 +122,7 @@ namespace IssueTracker
         /// -> if we detect any of the state values, prepend with state= as well
         /// </summary>
         /// <param name="args"></param>
+        /// <param name="supportedArgs"></param>
         /// <param name="skipProcessingForFirstNValues">Optional. Allows skipping processing values from the start. Affected values will be copied literally.</param>
         private static string[] ConvertArgumentsIntoAcceptableFormat(string[] args, Argument[] supportedArgs, int skipProcessingForFirstNValues = 0)
         {
@@ -144,7 +145,24 @@ namespace IssueTracker
                 {
                     current = "state=" + current;
                 }
-                if (!current.StartsWith("-") && !current.StartsWith("/"))
+
+                // check if we have any argument with a matching name and only then skip modifications
+                var argumentNameOnly = current;
+                if (argumentNameOnly.StartsWith("--"))
+                    argumentNameOnly = argumentNameOnly.Substring(2);
+                else if (argumentNameOnly.StartsWith("-") || argumentNameOnly.StartsWith("/"))
+                    argumentNameOnly = argumentNameOnly.Substring(1);
+
+                if (argumentNameOnly.Contains("="))
+                    argumentNameOnly = argumentNameOnly.Substring(0, argumentNameOnly.IndexOf('='));
+
+                // now without the prefix and possible value check match any of the user providable arguments
+                var match = supportedArgs.FirstOrDefault(
+                    a => argumentNameOnly.Equals(a.LongName, StringComparison.InvariantCultureIgnoreCase) ||
+                         (a.ShortName.HasValue && argumentNameOnly[0] == a.ShortName.Value));
+
+                // only modify if we did find a matching command, otherwise assume its some user value
+                if (match != null && (!current.StartsWith("-") && !current.StartsWith("/")))
                 {
                     // figure out whether its a single char command or a long one
                     if (current.Length == 1 || current[1] == '=')
@@ -165,17 +183,6 @@ namespace IssueTracker
                     // special case, if the last value was a switch that requires a value (e.g. "-t" "my message")
                     // and the value wasn't integrated (e.g. "-t=my message") then we need to skip the next value, otherwise we end up with "-t" "--my message".
 
-                    // check if we have any argument with a matching name and only then skip modifications
-                    var argumentNameOnly = current;
-                    if (argumentNameOnly.StartsWith("--"))
-                        argumentNameOnly = argumentNameOnly.Substring(2);
-                    else if (argumentNameOnly.StartsWith("-") || argumentNameOnly.StartsWith("/"))
-                        argumentNameOnly = argumentNameOnly.Substring(1);
-
-                    // now without the prefix and possible value check match any of the user providable arguments
-                    var match = supportedArgs.FirstOrDefault(
-                        a => argumentNameOnly.Equals(a.LongName, StringComparison.InvariantCultureIgnoreCase) ||
-                             (a.ShortName.HasValue && argumentNameOnly[0] == a.ShortName.Value));
                     if (match != null)
                     {
                         // since we found a match, we need to check whether the provided argument is a switch or not
