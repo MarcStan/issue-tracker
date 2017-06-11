@@ -130,11 +130,17 @@ namespace IssueTracker
                         if ((s == IssueState.Open || s == IssueState.Reopened) &&
                             (i.State == IssueState.Open || i.State == IssueState.Reopened))
                         {
-                            return true;
+                            // don't remove open issues, that's all we want
+                            return false;
                         }
 
-                        // remove closed
-                        return s == IssueState.Closed && i.State == IssueState.Closed;
+                        if (s == IssueState.Closed && i.State == IssueState.Closed)
+                        {
+                            // don't remove closed, that's all we want
+                            return false;
+                        }
+                        // no match; remove
+                        return true;
                     });
                     break;
                 case Filter.User:
