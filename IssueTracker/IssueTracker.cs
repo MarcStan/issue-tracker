@@ -140,7 +140,56 @@ namespace IssueTracker
         /// <param name="remove"></param>
         public virtual void EditTags(int id, Tag[] add, Tag[] remove)
         {
-            throw new NotImplementedException();
+            AssertIssueTracker();
+
+            var issues = Storage.LoadIssues();
+            var issue = issues.FirstOrDefault(i => i.Id == id);
+            if (issue == null)
+            {
+                Console.WriteLine($"No issue with id '#{id}' found!");
+                return;
+            }
+
+            if (add.Any(remove.Contains))
+            {
+                Console.WriteLine("Cannot add and remove the same tag at once!");
+                return;
+            }
+            if (!remove.Any() && !add.Any())
+            {
+                Console.WriteLine("None of the provided tags where valid!");
+                return;
+            }
+            // tags are now unique, order of add/remove doesn't matter anymore
+            var currentTags = issue.Tags.ToList();
+            foreach (var t in add)
+            {
+                if (!currentTags.Contains(t))
+                    currentTags.Add(t);
+            }
+            foreach (var t in remove)
+            {
+                if (currentTags.Contains(t))
+                    currentTags.Remove(t);
+            }
+            string message = "";
+            if (add.Length > 0)
+            {
+                message += $"Added tag{(add.Length > 1 ? "(s)" : "")}: {string.Join(", ", add.ToList())}.";
+            }
+            if (remove.Length > 0)
+            {
+                if (!string.IsNullOrEmpty(message))
+                    message += Environment.NewLine;
+
+                message += $"Removed tag{(remove.Length > 1 ? "(s)" : "")}: {string.Join(", ", remove.ToList())}.";
+            }
+            issue.Add(new Comment(message, CurrentUser, DateTime.Now, false));
+
+            issue.Tags = currentTags.ToArray();
+
+            Storage.SaveIssue(issue, false);
+            Console.WriteLine(message);
         }
 
         /// <summary>
@@ -152,7 +201,6 @@ namespace IssueTracker
         {
             throw new NotImplementedException();
         }
-
 
         /// <summary>
         /// Prints the list of issues in a human readable fashion.
