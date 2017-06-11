@@ -44,10 +44,17 @@ namespace IssueTracker
         /// <param name="issueTracker"></param>
         public void ParseAndExecute(string[] args, IssueTracker issueTracker)
         {
+            if (args == null || args.Length == 0)
+                throw new ArgumentException(nameof(args));
+            if (issueTracker == null)
+                throw new ArgumentNullException(nameof(issueTracker));
+
+            var newArgs = ConvertArgumentsIntoAcceptableFormat(args, 1);
+            args = newArgs;
+
             var parser = new CommandLineParser.CommandLineParser
             {
-                AcceptEqualSignSyntaxForValueArguments = true,
-
+                AcceptEqualSignSyntaxForValueArguments = true
             };
 
             parser.Arguments.Add(_addTitle);
@@ -103,6 +110,52 @@ namespace IssueTracker
             {
                 Console.WriteLine(e);
             }
+        }
+
+        /// <summary>
+        /// Fixes arguments so they pass the commandline libraries arbitrary specification
+        /// It wants --tag=foo or /tag=foo but it cannot be tag=foo (no prefix) or --tag:foo (: seperator)
+        /// 
+        /// So this adds the prefix where necessary and replaces : with =
+        /// additionally I really like the "issues open tag:foo" syntax but that isn't supported either
+        /// so instead it has to be "issues --state=open --tag:foo"
+        /// -> if we detect any of the state values, prepend with state= as well
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="skipProcessingForFirstNValues">Optional. Allows skipping processing values from the start. Affected values will be copied literally.</param>
+        private static string[] ConvertArgumentsIntoAcceptableFormat(string[] args, int skipProcessingForFirstNValues = 0)
+        {
+            var newArgs = new string[args.Length];
+            var states = _stateArgument.AllowedValues.ToList();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (i < skipProcessingForFirstNValues)
+                {
+                    newArgs[i] = args[i];
+                    continue;
+                }
+                var current = args[i].Replace(":", "=");
+
+                if (states.Any(s => s.Equals(current, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    current = "state=" + current;
+                }
+                if (!current.StartsWith("-") && !current.StartsWith("/"))
+                {
+                    // figure out whether its a single char command or a long one
+                    if (current.Length == 1 || current[1] == '=')
+                    {
+                        // one char or second char is seperator. must be a short arg
+                        current = "-" + current;
+                    }
+                    else
+                    {
+                        current = "--" + current;
+                    }
+                }
+                newArgs[i] = current;
+            }
+            return newArgs.ToArray();
         }
 
 
@@ -201,7 +254,11 @@ namespace IssueTracker
             }
             if (_stateArgument.Parsed)
             {
-                filters.Add(new FilterValue(Filter.IssueState, _stateArgument.Value));
+                IssueState s;
+                if (!Enum.TryParse(_stateArgument.Value, true, out s))
+                    throw new CommandLineException($"'{_stateArgument.Value}' is not a valid issue state!");
+
+                filters.Add(new FilterValue(Filter.IssueState, s));
             }
             issueTracker.ListIssues(filters);
         }
