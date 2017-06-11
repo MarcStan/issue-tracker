@@ -1,7 +1,7 @@
-using System;
-using System.IO;
 using FluentAssertions;
 using NUnit.Framework;
+using System;
+using System.IO;
 
 namespace IssueTracker.Tests.Units
 {
@@ -20,7 +20,8 @@ namespace IssueTracker.Tests.Units
                 Directory.Delete(dir, true);
 
             Directory.Exists(dir).Should().BeFalse();
-            Storage.SaveIssue(i, true);
+            var storage = new Storage(".");
+            storage.SaveIssue(i, true);
             Directory.Exists(dir).Should().BeTrue();
             File.Exists(dir + "\\issue.ini").Should().BeTrue();
 
@@ -52,11 +53,12 @@ namespace IssueTracker.Tests.Units
                 Directory.Delete(dir, true);
 
             Directory.Exists(dir).Should().BeFalse();
-            Storage.SaveIssue(i, true);
+            var storage = new Storage(".");
+            storage.SaveIssue(i, true);
             Directory.Exists(dir).Should().BeTrue();
             File.Exists(dir + "\\issue.ini").Should().BeTrue();
 
-            var loaded = Storage.LoadIssue(dir);
+            var loaded = storage.LoadIssue(dir);
             loaded.Title.Should().Be("hello world");
             loaded.Message.Should().Be("test message");
             loaded.Tags.Should().HaveCount(0);
@@ -85,11 +87,12 @@ namespace IssueTracker.Tests.Units
                 Directory.Delete(dir, true);
 
             Directory.Exists(dir).Should().BeFalse();
-            Storage.SaveIssue(i, true);
+            var storage = new Storage(".");
+            storage.SaveIssue(i, true);
             Directory.Exists(dir).Should().BeTrue();
             File.Exists(dir + "\\issue.ini").Should().BeTrue();
 
-            var loaded = Storage.LoadIssue(dir);
+            var loaded = storage.LoadIssue(dir);
             loaded.Title.Should().Be("hello world");
             loaded.Message.Should().Be("test message");
             loaded.Tags.Should().HaveCount(0);

@@ -6,16 +6,33 @@ using System.Linq;
 
 namespace IssueTracker
 {
+    /// <summary>
+    /// Allows loading and saving issues/comments and tags.
+    /// </summary>
     public class Storage
     {
+        private readonly string _storagePath;
+
+        /// <summary>
+        /// Creates a new storage container for the specific path.
+        /// </summary>
+        /// <param name="storagePath"></param>
+        public Storage(string storagePath)
+        {
+            if (string.IsNullOrEmpty(storagePath))
+                throw new ArgumentNullException(nameof(storagePath));
+
+            _storagePath = Path.GetFullPath(storagePath);
+        }
+
         /// <summary>
         /// Saves the issue to disk and all comments to disk.
         /// </summary>
         /// <param name="issue"></param>
         /// <param name="isNew">If true will assert that no other issue with this id exists. If false just overwrites the existing one.</param>
-        public static void SaveIssue(Issue issue, bool isNew)
+        public void SaveIssue(Issue issue, bool isNew)
         {
-            var tDir = "#" + issue.Id;
+            var tDir = Path.Combine(_storagePath, "#" + issue.Id);
             if (isNew && Directory.Exists(tDir))
             {
                 throw new NotSupportedException($"Issue with id {issue.Id} already exists.");
@@ -52,14 +69,13 @@ namespace IssueTracker
         }
 
         /// <summary>
-        /// Loads all issues.
+        /// Loads all issues from the given directory..
         /// </summary>
         /// <returns></returns>
-        public static List<Issue> LoadIssues()
+        public List<Issue> LoadIssues()
         {
             var issues = new List<Issue>();
-            var curr = Path.GetFullPath(".");
-            var dirs = Directory.GetDirectories(curr);
+            var dirs = Directory.GetDirectories(_storagePath);
             foreach (var d in dirs)
             {
                 var i = LoadIssue(d);
@@ -74,7 +90,7 @@ namespace IssueTracker
             return issues;
         }
 
-        internal static Issue LoadIssue(string directory)
+        internal Issue LoadIssue(string directory)
         {
             var dName = new DirectoryInfo(directory).Name;
             if (!dName.StartsWith("#"))
@@ -122,7 +138,7 @@ namespace IssueTracker
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static Comment LoadComment(string path)
+        public Comment LoadComment(string path)
         {
             var ini = new IniFile();
             ini.Load(path);

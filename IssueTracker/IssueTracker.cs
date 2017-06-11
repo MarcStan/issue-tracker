@@ -14,6 +14,7 @@ namespace IssueTracker
     {
         private readonly string _workingDirectory;
         private const string RootFile = ".issues";
+        private Storage _storage;
 
         /// <summary>
         /// Creates a new instance that works in the provided directory.
@@ -25,6 +26,7 @@ namespace IssueTracker
                 throw new ArgumentNullException(nameof(workingDirectory));
 
             _workingDirectory = Path.GetFullPath(workingDirectory);
+            _storage = new Storage(_workingDirectory);
         }
 
         /// <summary>
@@ -64,7 +66,7 @@ namespace IssueTracker
 
             AssertIssueTracker();
 
-            var issues = Storage.LoadIssues();
+            var issues = _storage.LoadIssues();
             bool stateWasFiltered = false;
             foreach (var f in filters)
             {
@@ -120,7 +122,7 @@ namespace IssueTracker
         {
             AssertIssueTracker();
 
-            var issues = Storage.LoadIssues();
+            var issues = _storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
             {
@@ -140,10 +142,10 @@ namespace IssueTracker
         {
             AssertIssueTracker();
 
-            var all = Storage.LoadIssues();
+            var all = _storage.LoadIssues();
             var maxId = all.Any() ? all.Max(i => i.Id) : 0;
             var issue = new Issue(maxId + 1, title, message, tags, DateTime.Now, CurrentUser, null, IssueState.Open, -1);
-            Storage.SaveIssue(issue, true);
+            _storage.SaveIssue(issue, true);
             Console.WriteLine($"Created issue '#{issue.Id}' {issue.Title}");
         }
 
@@ -160,7 +162,7 @@ namespace IssueTracker
 
             AssertIssueTracker();
 
-            var issues = Storage.LoadIssues();
+            var issues = _storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
             {
@@ -224,7 +226,7 @@ namespace IssueTracker
 
                 issue.Tags = currentTags.ToArray();
 
-                Storage.SaveIssue(issue, false);
+                _storage.SaveIssue(issue, false);
                 Console.WriteLine(message);
             }
             else
@@ -242,7 +244,7 @@ namespace IssueTracker
         {
             AssertIssueTracker();
 
-            var issues = Storage.LoadIssues();
+            var issues = _storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
             {
@@ -250,7 +252,7 @@ namespace IssueTracker
                 return;
             }
             issue.Add(new Comment(message, CurrentUser, DateTime.Now, true));
-            Storage.SaveIssue(issue, false);
+            _storage.SaveIssue(issue, false);
             Console.WriteLine("Comment added!");
         }
 
@@ -335,7 +337,7 @@ namespace IssueTracker
             if (targetState == IssueState.Open)
                 throw new NotSupportedException("Issues can only be closed or reopenend.");
 
-            var issues = Storage.LoadIssues();
+            var issues = _storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
             {
@@ -353,7 +355,7 @@ namespace IssueTracker
             {
                 ChangedStateTo = targetState
             });
-            Storage.SaveIssue(issue, false);
+            _storage.SaveIssue(issue, false);
             Console.WriteLine($"Issue '#{id}' {targetState.ToString().ToLower()}!", ConsoleColor.Green);
         }
 
