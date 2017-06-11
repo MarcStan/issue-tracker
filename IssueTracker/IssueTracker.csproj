@@ -68,6 +68,7 @@
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Filter.cs" />
     <Compile Include="FilterValue.cs" />
+    <Compile Include="GitHelper.cs" />
     <Compile Include="Issue.cs" />
     <Compile Include="IssueState.cs" />
     <Compile Include="IssueTracker.cs" />

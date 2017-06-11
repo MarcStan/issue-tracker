@@ -22,6 +22,20 @@ namespace IssueTracker
         };
         private static readonly EnumeratedValueArgument<string> _stateArgument = new EnumeratedValueArgument<string>('s', "state", "Filters the list for the specific state.", new[] { "open", "closed", "all" });
 
+        /// <summary>
+        /// A helper dicitionary definiting the relationship between first class and secondclass arguments.
+        /// Each firstclass argument may allow multiple second class arguments (or none).
+        /// </summary>
+        private static readonly Dictionary<string, Argument[]> _allowedArguments = new Dictionary<string, Argument[]>
+        {
+            {"add", new Argument[] {_addTitle, _addMessage, _tag} },
+            {"edit", new Argument[] {_tag} },
+            {"comment", new Argument[] {_addMessage} },
+            {"show", new Argument[0] },
+            {"close", new Argument[0] },
+            {"reopen", new Argument[0] }
+        };
+
         public static void Main(string[] args)
         {
             if (args.Length == 0)
@@ -71,66 +85,37 @@ namespace IssueTracker
                         }
                         issueTracker.InitializeNewProject();
                         break;
-                    case "show":
                     case "add":
-                    case "edit":
-                    case "comment":
-                    case "close":
-                    case "reopen":
-                        // all those require a issue tracker to exist
-                        if (!issueTracker.WorkingDirectoryIsIssueTracker)
-                        {
-                            Console.WriteLine("Command must run in an existing issue tracker directory.");
-                            DisplayHelp(parser);
-                            return;
-                        }
-                        // requires a second argument which is the issue id
-                        if (args.Length < 2)
-                        {
-                            Console.WriteLine($"Argument '{args[0]}' requires a second argument (int:issueId)");
-                            DisplayHelp(parser);
-                            return;
-                        }
-                        int id;
-                        if (!int.TryParse(args[1], out id) || id < 1)
-                        {
-                            Console.WriteLine($"'{args[1]}' is not a valid issue identifier (must be int)!");
-                            DisplayHelp(parser);
-                            return;
-                        }
-                        // first command is valid
-                        // now parse the remaining arguments
-                        // parse all except the ones we manually processed
-                        parser.ParseCommandLine(args.Skip(2).ToArray());
-                        break;
-                    case "list":
-                        // list doesn't require an id
+                        // add doesn't require an id
                         // parse all except the ones we manually processed
                         parser.ParseCommandLine(args.Skip(1).ToArray());
                         // ensure the user didn't call bullshit on the commandline
-                        // e.g. "list user:name -title "foobar"
-                        AssertNoWrongArgsWhereParsed(parser, _tag, _user, _stateArgument);
-                        var filters = new List<FilterValue>();
+                        // e.g. "add user:name -title "foobar"
+                        AssertNoWrongArgsWhereParsed(parser, _tag, _addMessage, _addTitle);
+
+                        var title = _addTitle.Value;
+                        var message = _addMessage.Parsed ? _addMessage.Value : null;
+                        Tag[] a = null;
                         if (_tag.Parsed)
                         {
-                            Tag[] add, remove;
-                            ParseTags(_tag.Value, out add, out remove);
-                            if (remove.Any())
-                                throw new CommandLineException("Cannot remove tags when listing issues!");
-                            if (!add.Any())
-                                throw new CommandLineException("No tags to filter for provided");
-
-                            filters.Add(new FilterValue(Filter.Tag, add));
+                            Tag[] r;
+                            ParseTags(_tag.Value, out a, out r);
+                            if (r.Any())
+                                throw new CommandLineException("Cannot remove tags when adding new issue!");
+                            if (!a.Any())
+                                throw new CommandLineException("No tags to add provided!");
                         }
-                        if (_user.Parsed)
-                        {
-                            filters.Add(new FilterValue(Filter.User, _user.Value));
-                        }
-                        if (_stateArgument.Parsed)
-                        {
-                            filters.Add(new FilterValue(Filter.IssueState, _stateArgument.Value));
-                        }
-                        issueTracker.ListIssues(filters);
+                        issueTracker.AddIssue(title, message, a);
+                        break;
+                    case "edit":
+                    case "comment":
+                    case "show":
+                    case "close":
+                    case "reopen":
+                        ProcessCommandWithIssueId(args, parser, issueTracker);
+                        break;
+                    case "list":
+                        ProcessListCommand(args, parser, issueTracker);
                         break;
                     default:
                         throw new CommandLineException("First argument is not valid. Use 'help' for more information.");
@@ -142,6 +127,119 @@ namespace IssueTracker
             }
         }
 
+        /// <summary>
+        /// Parses the command line and runs the list command if it is valid.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="parser"></param>
+        /// <param name="issueTracker"></param>
+        private static void ProcessListCommand(string[] args, CommandLineParser.CommandLineParser parser, IssueTracker issueTracker)
+        {
+            if (args.Length == 0 || !"list".Equals(args[0], StringComparison.InvariantCultureIgnoreCase))
+                throw new NotSupportedException("First arg must be 'list'");
+
+            // list doesn't require an id
+            // parse all except the ones we manually processed
+            parser.ParseCommandLine(args.Skip(1).ToArray());
+            // ensure the user didn't call bullshit on the commandline
+            // e.g. "list user:name -title "foobar"
+            AssertNoWrongArgsWhereParsed(parser, _tag, _user, _stateArgument);
+            var filters = new List<FilterValue>();
+            if (_tag.Parsed)
+            {
+                Tag[] add, remove;
+                ParseTags(_tag.Value, out add, out remove);
+                if (remove.Any())
+                    throw new CommandLineException("Cannot remove tags when listing issues!");
+                if (!add.Any())
+                    throw new CommandLineException("No tags to filter for provided!");
+
+                filters.Add(new FilterValue(Filter.Tag, add));
+            }
+            if (_user.Parsed)
+            {
+                filters.Add(new FilterValue(Filter.User, _user.Value));
+            }
+            if (_stateArgument.Parsed)
+            {
+                filters.Add(new FilterValue(Filter.IssueState, _stateArgument.Value));
+            }
+            issueTracker.ListIssues(filters);
+        }
+
+        /// <summary>
+        /// Processes all commands that need an issue id as second argument.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="parser"></param>
+        /// <param name="issueTracker"></param>
+        private static void ProcessCommandWithIssueId(string[] args, CommandLineParser.CommandLineParser parser, IssueTracker issueTracker)
+        {
+            // all those require a issue tracker to exist
+            if (!issueTracker.WorkingDirectoryIsIssueTracker)
+            {
+                Console.WriteLine("Command must run in an existing issue tracker directory.");
+                DisplayHelp(parser);
+                return;
+            }
+            // requires a second argument which is the issue id
+            if (args.Length < 2)
+            {
+                Console.WriteLine($"Argument '{args[0]}' requires a second argument (int:issueId)");
+                DisplayHelp(parser);
+                return;
+            }
+            int id;
+            if (!int.TryParse(args[1], out id) || id < 1)
+            {
+                Console.WriteLine($"'{args[1]}' is not a valid issue identifier (must be int)!");
+                DisplayHelp(parser);
+                return;
+            }
+            // first command is valid
+            // now parse the remaining arguments
+            // parse all except the ones we manually processed
+            parser.ParseCommandLine(args.Skip(2).ToArray());
+            // ensure correct usage
+            var allowed = _allowedArguments[args[0]];
+            AssertNoWrongArgsWhereParsed(parser, allowed);
+
+            // now that correct usage is determined, figure out which command we used again
+            switch (args[0].ToLower())
+            {
+                case "edit":
+                    if (!_tag.Parsed)
+                        throw new CommandLineException("Tags is required to edit an issue!");
+
+                    Tag[] a, r;
+                    ParseTags(_tag.Value, out a, out r);
+                    issueTracker.EditTags(id, a, r);
+                    break;
+                case "comment":
+                    if (!_addMessage.Parsed)
+                        throw new CommandLineException("Message is required to comment on an issue!");
+
+                    issueTracker.CommentIssue(id, _addMessage.Value);
+                    break;
+                case "show":
+                    issueTracker.ShowIssue(id);
+                    break;
+                case "close":
+                    issueTracker.CloseIssue(id);
+                    break;
+                case "reopen":
+                    issueTracker.ReopenIssue(id);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Returns the set of tags to be added and removed based on the input string.
+        /// Seperator for multiple tags is ',' otherwise a single tag is assumed.
+        /// </summary>
+        /// <param name="tags"></param>
+        /// <param name="tagsToAdd"></param>
+        /// <param name="tagsToRemove"></param>
         private static void ParseTags(string tags, out Tag[] tagsToAdd, out Tag[] tagsToRemove)
         {
             var remove = new List<Tag>();

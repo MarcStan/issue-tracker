@@ -25,6 +25,11 @@ namespace IssueTracker
         }
 
         /// <summary>
+        /// Returns the current user name as found in the .gitconfig.
+        /// </summary>
+        public string CurrentUser => GitHelper.GetUserName();
+
+        /// <summary>
         /// Gets whether the working directory is an issue tracker.
         /// </summary>
         public bool WorkingDirectoryIsIssueTracker => File.Exists(Path.Combine(_workingDirectory, ".issues"));
@@ -42,6 +47,65 @@ namespace IssueTracker
         /// </summary>
         /// <param name="filters"></param>
         public void ListIssues(List<FilterValue> filters)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Reopens the isse with the provided id (if found and closed).
+        /// </summary>
+        /// <param name="id"></param>
+        public void ReopenIssue(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Reopens the isse with the provided id (if found and open).
+        /// </summary>
+        /// <param name="id"></param>
+        public void CloseIssue(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Displays the provided issue with all its comments.
+        /// </summary>
+        /// <param name="id"></param>
+        public void ShowIssue(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Adds a new issue to the issue tracker.
+        /// </summary>
+        /// <param name="title">Required.</param>
+        /// <param name="message">Optional.</param>
+        /// <param name="tags">Optional.</param>
+        public void AddIssue(string title, string message, Tag[] tags)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Edits the tags of the issue with the provided id (if found).
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="add"></param>
+        /// <param name="remove"></param>
+        public void EditTags(int id, Tag[] add, Tag[] remove)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Comments on the provided issue.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="addMessageValue"></param>
+        public void CommentIssue(int id, string message)
         {
             throw new NotImplementedException();
         }
