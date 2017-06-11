@@ -294,11 +294,19 @@ namespace IssueTracker
             }
             if (_stateArgument.Parsed)
             {
-                IssueState s;
-                if (!Enum.TryParse(_stateArgument.Value, true, out s))
-                    throw new CommandLineException($"'{_stateArgument.Value}' is not a valid issue state!");
-
-                filters.Add(new FilterValue(Filter.IssueState, s));
+                var v = _stateArgument.Value.ToLower();
+                if ("all".Equals(v))
+                {
+                    // no filter
+                }
+                else if ("open".Equals(v))
+                {
+                    filters.Add(new FilterValue(Filter.IssueState, IssueState.Open));
+                }
+                else if ("closed".Equals(v))
+                {
+                    filters.Add(new FilterValue(Filter.IssueState, IssueState.Closed));
+                }
             }
             else
             {
