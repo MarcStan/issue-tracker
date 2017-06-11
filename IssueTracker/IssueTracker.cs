@@ -81,6 +81,79 @@ namespace IssueTracker
             PrintIssueList(issues, stateWasFiltered);
         }
 
+        private void AssertIssueTracker()
+        {
+            if (!WorkingDirectoryIsIssueTracker)
+                throw new NotSupportedException("Command must execute in a issue tracker directory");
+        }
+
+        /// <summary>
+        /// Reopens the isse with the provided id (if found and closed).
+        /// </summary>
+        /// <param name="id"></param>
+        public virtual void ReopenIssue(int id)
+        {
+            ChangeIssueState(id, IssueState.Reopened);
+        }
+
+        /// <summary>
+        /// Reopens the isse with the provided id (if found and open).
+        /// </summary>
+        /// <param name="id"></param>
+        public virtual void CloseIssue(int id)
+        {
+            ChangeIssueState(id, IssueState.Closed);
+        }
+
+        /// <summary>
+        /// Displays the provided issue with all its comments.
+        /// </summary>
+        /// <param name="id"></param>
+        public virtual void ShowIssue(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Adds a new issue to the issue tracker.
+        /// </summary>
+        /// <param name="title">Required.</param>
+        /// <param name="message">Optional.</param>
+        /// <param name="tags">Optional.</param>
+        public virtual void AddIssue(string title, string message, Tag[] tags)
+        {
+            AssertIssueTracker();
+
+            // TODO: inefficient to always load all isses when adding a new issue. maybe store ID in .issues file
+            var all = Storage.LoadIssues();
+            var maxId = all.Any() ? all.Max(i => i.Id) : 0;
+            var issue = new Issue(maxId + 1, title, message, tags, DateTime.Now, CurrentUser, null, IssueState.Open, -1);
+            Storage.SaveIssue(issue, true);
+            Console.WriteLine($"Created issue '#{issue.Id}' {issue.Title}");
+        }
+
+        /// <summary>
+        /// Edits the tags of the issue with the provided id (if found).
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="add"></param>
+        /// <param name="remove"></param>
+        public virtual void EditTags(int id, Tag[] add, Tag[] remove)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Comments on the provided issue.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="message"></param>
+        public virtual void CommentIssue(int id, string message)
+        {
+            throw new NotImplementedException();
+        }
+
+
         /// <summary>
         /// Prints the list of issues in a human readable fashion.
         /// </summary>
@@ -152,76 +225,36 @@ namespace IssueTracker
             }
         }
 
-        private void AssertIssueTracker()
-        {
-            if (!WorkingDirectoryIsIssueTracker)
-                throw new NotSupportedException("Command must execute in a issue tracker directory");
-        }
-
         /// <summary>
-        /// Reopens the isse with the provided id (if found and closed).
+        /// Changes the issue state of the specific issue where possible.
         /// </summary>
         /// <param name="id"></param>
-        public virtual void ReopenIssue(int id)
+        /// <param name="targetState"></param>
+        private void ChangeIssueState(int id, IssueState targetState)
         {
-            throw new NotImplementedException();
-        }
+            if (targetState == IssueState.Open)
+                throw new NotSupportedException("Issues can only be closed or reopenend.");
 
-        /// <summary>
-        /// Reopens the isse with the provided id (if found and open).
-        /// </summary>
-        /// <param name="id"></param>
-        public virtual void CloseIssue(int id)
-        {
-            throw new NotImplementedException();
-        }
+            var issues = Storage.LoadIssues();
+            var issue = issues.FirstOrDefault(i => i.Id == id);
+            if (issue == null)
+            {
+                Console.WriteLine($"No issue with id '#{id}' found!");
+                return;
+            }
+            if (issue.State == targetState)
+            {
+                // nothing to do
+                return;
+            }
 
-        /// <summary>
-        /// Displays the provided issue with all its comments.
-        /// </summary>
-        /// <param name="id"></param>
-        public virtual void ShowIssue(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Adds a new issue to the issue tracker.
-        /// </summary>
-        /// <param name="title">Required.</param>
-        /// <param name="message">Optional.</param>
-        /// <param name="tags">Optional.</param>
-        public virtual void AddIssue(string title, string message, Tag[] tags)
-        {
-            AssertIssueTracker();
-
-            // TODO: inefficient to always load all isses when adding a new issue. maybe store ID in .issues file
-            var all = Storage.LoadIssues();
-            var maxId = all.Any() ? all.Max(i => i.Id) : 0;
-            var issue = new Issue(maxId + 1, title, message, tags, DateTime.Now, CurrentUser, null, IssueState.Open, -1);
-            Storage.SaveIssue(issue, true);
-            Console.WriteLine($"Created issue '#{issue.Id}' {issue.Title}");
-        }
-
-        /// <summary>
-        /// Edits the tags of the issue with the provided id (if found).
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="add"></param>
-        /// <param name="remove"></param>
-        public virtual void EditTags(int id, Tag[] add, Tag[] remove)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Comments on the provided issue.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="message"></param>
-        public virtual void CommentIssue(int id, string message)
-        {
-            throw new NotImplementedException();
+            // adding comment with changestate will change the issue state
+            issue.Add(new Comment($"{targetState} the issue.", CurrentUser, DateTime.Now, false)
+            {
+                ChangedStateTo = targetState
+            });
+            Storage.SaveIssue(issue, false);
+            Console.WriteLine($"Issue '#{id}' {targetState.ToString().ToLower()}!", ConsoleColor.Green);
         }
     }
 }
