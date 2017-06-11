@@ -27,17 +27,17 @@ namespace IssueTracker
         /// <summary>
         /// Returns the current user name as found in the .gitconfig.
         /// </summary>
-        public string CurrentUser => GitHelper.GetUserName();
+        public virtual string CurrentUser => GitHelper.GetUserName();
 
         /// <summary>
         /// Gets whether the working directory is an issue tracker.
         /// </summary>
-        public bool WorkingDirectoryIsIssueTracker => File.Exists(Path.Combine(_workingDirectory, ".issues"));
+        public virtual bool WorkingDirectoryIsIssueTracker => File.Exists(Path.Combine(_workingDirectory, ".issues"));
 
         /// <summary>
         /// Creates a new project in the current directory.
         /// </summary>
-        public void InitializeNewProject()
+        public virtual void InitializeNewProject()
         {
             throw new System.NotImplementedException();
         }
@@ -46,7 +46,7 @@ namespace IssueTracker
         /// Lists the issues that match the provided set of filters.
         /// </summary>
         /// <param name="filters"></param>
-        public void ListIssues(List<FilterValue> filters)
+        public virtual void ListIssues(List<FilterValue> filters)
         {
             throw new NotImplementedException();
         }
@@ -55,7 +55,7 @@ namespace IssueTracker
         /// Reopens the isse with the provided id (if found and closed).
         /// </summary>
         /// <param name="id"></param>
-        public void ReopenIssue(int id)
+        public virtual void ReopenIssue(int id)
         {
             throw new NotImplementedException();
         }
@@ -64,7 +64,7 @@ namespace IssueTracker
         /// Reopens the isse with the provided id (if found and open).
         /// </summary>
         /// <param name="id"></param>
-        public void CloseIssue(int id)
+        public virtual void CloseIssue(int id)
         {
             throw new NotImplementedException();
         }
@@ -73,7 +73,7 @@ namespace IssueTracker
         /// Displays the provided issue with all its comments.
         /// </summary>
         /// <param name="id"></param>
-        public void ShowIssue(int id)
+        public virtual void ShowIssue(int id)
         {
             throw new NotImplementedException();
         }
@@ -84,7 +84,7 @@ namespace IssueTracker
         /// <param name="title">Required.</param>
         /// <param name="message">Optional.</param>
         /// <param name="tags">Optional.</param>
-        public void AddIssue(string title, string message, Tag[] tags)
+        public virtual void AddIssue(string title, string message, Tag[] tags)
         {
             throw new NotImplementedException();
         }
@@ -95,7 +95,7 @@ namespace IssueTracker
         /// <param name="id"></param>
         /// <param name="add"></param>
         /// <param name="remove"></param>
-        public void EditTags(int id, Tag[] add, Tag[] remove)
+        public virtual void EditTags(int id, Tag[] add, Tag[] remove)
         {
             throw new NotImplementedException();
         }
@@ -104,8 +104,8 @@ namespace IssueTracker
         /// Comments on the provided issue.
         /// </summary>
         /// <param name="id"></param>
-        /// <param name="addMessageValue"></param>
-        public void CommentIssue(int id, string message)
+        /// <param name="message"></param>
+        public virtual void CommentIssue(int id, string message)
         {
             throw new NotImplementedException();
         }
