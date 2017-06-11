@@ -2,6 +2,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace IssueTracker.Tests.Integration
 {
@@ -51,6 +52,21 @@ namespace IssueTracker.Tests.Integration
                 new Action(() => it.AddIssue("foo", "bar", null)).ShouldThrow<NotSupportedException>();
 
                 it.WorkingDirectoryIsIssueTracker.Should().BeFalse();
+            });
+        }
+
+        [Test]
+        public void AddNewIssueInIssueTrackerDirectory()
+        {
+            TestHelper.ExecuteInNewDirectory(path =>
+            {
+                var it = new IssueTracker(path);
+                it.WorkingDirectoryIsIssueTracker.Should().BeFalse();
+                it.InitializeNewProject();
+
+                new Action(() => it.AddIssue("foo", "bar", null)).ShouldNotThrow();
+
+                File.Exists(Path.Combine(path, "#1\\issue.ini")).Should().BeTrue();
             });
         }
 
