@@ -1,9 +1,9 @@
+using FluentAssertions;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using FluentAssertions;
-using NUnit.Framework;
 
 namespace IssueTracker.Tests.Units
 {
@@ -16,339 +16,303 @@ namespace IssueTracker.Tests.Units
         [Test]
         public void TestInvalidCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            TestHelper.ExecuteInNewDirectory(path =>
+            {
+                var arguments = new[] { "invalid_command" };
 
-            Directory.CreateDirectory(path);
-
-            var arguments = new[] { "invalid_command" };
-
-            var args = ExecuteTestCommand(path, arguments);
-            args.Should().BeNull();
-
-            Directory.Delete(path, true);
+                var args = ExecuteTestCommand(path, arguments);
+                args.Should().BeNull();
+            });
         }
 
         [Test]
         public void TestHelpCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            TestHelper.ExecuteInNewDirectory(path =>
+            {
+                var arguments = new[] { "help" };
 
-            Directory.CreateDirectory(path);
-
-            var arguments = new[] { "help" };
-
-            var args = ExecuteTestCommand(path, arguments);
-            args.Should().BeNull();
-
-            Directory.Delete(path, true);
+                var args = ExecuteTestCommand(path, arguments);
+                args.Should().BeNull();
+            });
         }
 
         [Test]
         public void TestInitCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            TestHelper.ExecuteInNewDirectory(path =>
+            {
+                var arguments = new[] { "init" };
 
-            Directory.CreateDirectory(path);
-
-            var arguments = new[] { "init" };
-
-            var args = ExecuteTestCommand(path, arguments);
-            args.Should().BeEmpty();
-
-            Directory.Delete(path, true);
+                var args = ExecuteTestCommand(path, arguments);
+                args.Should().BeEmpty();
+            });
         }
 
         [Test]
         public void TestListCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            TestHelper.ExecuteInNewDirectory(path =>
+            {
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
 
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
+                var arguments = new[] { "list" };
 
-            var arguments = new[] { "list" };
+                var args = ExecuteTestCommand(path, arguments);
+                // if no filters are provided a default filter of "open issues only" is applied
+                args.Should().ContainKey("filters");
 
-            var args = ExecuteTestCommand(path, arguments);
-            // if no filters are provided a default filter of "open issues only" is applied
-            args.Should().ContainKey("filters");
-
-            var filters = (List<FilterValue>)args["filters"];
-            filters.Should().HaveCount(1);
-            var state = filters.FirstOrDefault(f => f.FilterType == Filter.IssueState);
-            state.Should().NotBeNull();
-            state.Value.Should().Be(IssueState.Open);
-
-            Directory.Delete(path, true);
+                var filters = (List<FilterValue>)args["filters"];
+                filters.Should().HaveCount(1);
+                var state = filters.FirstOrDefault(f => f.FilterType == Filter.IssueState);
+                state.Should().NotBeNull();
+                state.Value.Should().Be(IssueState.Open);
+            });
         }
 
         [Test]
         public void TestListCommandWithFilters()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
-
-            // filter order shouldn't matter
-            var permutations = new[]
+            TestHelper.ExecuteInNewDirectory(path =>
             {
-                new[] {"list", "open", "user:me", "tag:foo"},
-                new[] {"list", "user:me", "state:open", "tag:foo" },
-                new[] {"list", "user:me", "tag:foo", "--state:open"},
-                new[] {"list", "/tag:foo", "user:me", "open"},
-                new[] {"list", "tag:foo", "open", "user:me" }
-            };
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
 
-            foreach (var p in permutations)
-            {
-                var args = ExecuteTestCommand(path, p);
-                args.Should().ContainKey("filters");
+                // filter order shouldn't matter
+                var permutations = new[]
+                {
+                    new[] {"list", "open", "user:me", "tag:foo"},
+                    new[] {"list", "user:me", "state:open", "tag:foo"},
+                    new[] {"list", "user:me", "tag:foo", "--state:open"},
+                    new[] {"list", "/tag:foo", "user:me", "open"},
+                    new[] {"list", "tag:foo", "open", "user:me"}
+                };
 
-                var filters = (List<FilterValue>)args["filters"];
-                filters.Should().HaveCount(3);
-                var state = filters.FirstOrDefault(f => f.FilterType == Filter.IssueState);
-                state.Should().NotBeNull();
-                var user = filters.FirstOrDefault(f => f.FilterType == Filter.User);
-                user.Should().NotBeNull();
-                var tag = filters.FirstOrDefault(f => f.FilterType == Filter.Tag);
-                tag.Should().NotBeNull();
+                foreach (var p in permutations)
+                {
+                    var args = ExecuteTestCommand(path, p);
+                    args.Should().ContainKey("filters");
 
-                state.Value.Should().Be(IssueState.Open);
-                user.Value.Should().Be("me");
-                var tags = (Tag[])tag.Value;
-                tags.Should().HaveCount(1);
-                tags[0].Name.Should().Be("foo");
-            }
+                    var filters = (List<FilterValue>)args["filters"];
+                    filters.Should().HaveCount(3);
+                    var state = filters.FirstOrDefault(f => f.FilterType == Filter.IssueState);
+                    state.Should().NotBeNull();
+                    var user = filters.FirstOrDefault(f => f.FilterType == Filter.User);
+                    user.Should().NotBeNull();
+                    var tag = filters.FirstOrDefault(f => f.FilterType == Filter.Tag);
+                    tag.Should().NotBeNull();
 
-            Directory.Delete(path, true);
+                    state.Value.Should().Be(IssueState.Open);
+                    user.Value.Should().Be("me");
+                    var tags = (Tag[])tag.Value;
+                    tags.Should().HaveCount(1);
+                    tags[0].Name.Should().Be("foo");
+                }
+            });
         }
 
         [Test]
         public void TestAddCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            TestHelper.ExecuteInNewDirectory(path =>
+            {
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
 
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
+                var arguments = new[] { "add", "-t", "hello world", "-m", "foobar", "tag:bug" };
 
-            var arguments = new[] { "add", "-t", "hello world", "-m", "foobar", "tag:bug" };
+                var args = ExecuteTestCommand(path, arguments);
+                // if no filters are provided a default filter of "open issues only" is applied
+                args.Should().ContainKey("title");
+                args.Should().ContainKey("message");
+                args.Should().ContainKey("tags");
 
-            var args = ExecuteTestCommand(path, arguments);
-            // if no filters are provided a default filter of "open issues only" is applied
-            args.Should().ContainKey("title");
-            args.Should().ContainKey("message");
-            args.Should().ContainKey("tags");
-
-            args["title"].Should().Be("hello world");
-            args["message"].Should().Be("foobar");
-            ((Tag[])args["tags"]).Should().Contain(new Tag("bug"));
-
-            Directory.Delete(path, true);
+                args["title"].Should().Be("hello world");
+                args["message"].Should().Be("foobar");
+                ((Tag[])args["tags"]).Should().Contain(new Tag("bug"));
+            });
         }
 
         [Test]
         public void TestCloseCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
-            Directory.CreateDirectory(Path.Combine(path, "#1"));
-            var text = new[]
+            TestHelper.ExecuteInNewDirectory(path =>
             {
-                "[Issue]",
-                "Title=hello",
-                "Message=",
-                "Tags=",
-                "PostDate=131416916119635597",
-                "Author=Contoso",
-                "State=Open",
-                "CommentCount=0",
-                "LastStateChangeCommentIndex=-1"
-            };
-            File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
+                Directory.CreateDirectory(Path.Combine(path, "#1"));
+                var text = new[]
+                {
+                    "[Issue]",
+                    "Title=hello",
+                    "Message=",
+                    "Tags=",
+                    "PostDate=131416916119635597",
+                    "Author=Contoso",
+                    "State=Open",
+                    "CommentCount=0",
+                    "LastStateChangeCommentIndex=-1"
+                };
+                File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
 
-            var arguments = new[] { "close", "1" };
+                var arguments = new[] { "close", "1" };
 
-            var args = ExecuteTestCommand(path, arguments);
+                var args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-
-            Directory.Delete(path, true);
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+            });
         }
 
         [Test]
         public void TestReopenCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
-            Directory.CreateDirectory(Path.Combine(path, "#1"));
-            var text = new[]
+            TestHelper.ExecuteInNewDirectory(path =>
             {
-                "[Issue]",
-                "Title=hello",
-                "Message=",
-                "Tags=",
-                "PostDate=131416916119635597",
-                "Author=Contoso",
-                "State=Open",
-                "CommentCount=0",
-                "LastStateChangeCommentIndex=-1"
-            };
-            var close = new[]
-            {
-                "[Comment]",
-                "Message = Closed the issue.",
-                "CommentDate=131416926100176451",
-                "Author=Contoso",
-                "Editable=False",
-                "ChangedStateTo=Closed"
-            };
-            File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
-            File.WriteAllLines(Path.Combine(path, "#1\\comment-001.ini"), close);
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
+                Directory.CreateDirectory(Path.Combine(path, "#1"));
+                var text = new[]
+                {
+                    "[Issue]",
+                    "Title=hello",
+                    "Message=",
+                    "Tags=",
+                    "PostDate=131416916119635597",
+                    "Author=Contoso",
+                    "State=Open",
+                    "CommentCount=0",
+                    "LastStateChangeCommentIndex=-1"
+                };
+                var close = new[]
+                {
+                    "[Comment]",
+                    "Message = Closed the issue.",
+                    "CommentDate=131416926100176451",
+                    "Author=Contoso",
+                    "Editable=False",
+                    "ChangedStateTo=Closed"
+                };
+                File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
+                File.WriteAllLines(Path.Combine(path, "#1\\comment-001.ini"), close);
 
-            var arguments = new[] { "reopen", "1" };
+                var arguments = new[] { "reopen", "1" };
 
-            var args = ExecuteTestCommand(path, arguments);
+                var args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-
-            Directory.Delete(path, true);
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+            });
         }
 
         [Test]
         public void TestEditTags()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
-            Directory.CreateDirectory(Path.Combine(path, "#1"));
-            var text = new[]
+            TestHelper.ExecuteInNewDirectory(path =>
             {
-                "[Issue]",
-                "Title=hello",
-                "Message=",
-                "Tags=",
-                "PostDate=131416916119635597",
-                "Author=Contoso",
-                "State=Open",
-                "CommentCount=0",
-                "LastStateChangeCommentIndex=-1"
-            };
-            File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
+                Directory.CreateDirectory(Path.Combine(path, "#1"));
+                var text = new[]
+                {
+                    "[Issue]",
+                    "Title=hello",
+                    "Message=",
+                    "Tags=",
+                    "PostDate=131416916119635597",
+                    "Author=Contoso",
+                    "State=Open",
+                    "CommentCount=0",
+                    "LastStateChangeCommentIndex=-1"
+                };
+                File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
 
 
-            // first add a few tags
-            var arguments = new[] { "edit", "1", "tag:foo,bar,baz" };
+                // first add a few tags
+                var arguments = new[] { "edit", "1", "tag:foo,bar,baz" };
 
-            var args = ExecuteTestCommand(path, arguments);
+                var args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-            ((Tag[])args["add"]).Should().Contain(new[] { new Tag("foo"), new Tag("bar"), new Tag("baz") });
-            ((Tag[])args["remove"]).Should().BeEmpty();
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+                ((Tag[])args["add"]).Should().Contain(new[] { new Tag("foo"), new Tag("bar"), new Tag("baz") });
+                ((Tag[])args["remove"]).Should().BeEmpty();
 
-            // next remove one
-            arguments = new[] { "edit", "1", "tag:-foo" };
+                // next remove one
+                arguments = new[] { "edit", "1", "tag:-foo" };
 
-            args = ExecuteTestCommand(path, arguments);
+                args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-            ((Tag[])args["add"]).Should().BeEmpty();
-            ((Tag[])args["remove"]).Should().Contain(new[] { new Tag("foo") });
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+                ((Tag[])args["add"]).Should().BeEmpty();
+                ((Tag[])args["remove"]).Should().Contain(new[] { new Tag("foo") });
 
-            // finally add one and remove 2
-            arguments = new[] { "edit", "1", "tag:bug,-bar,-baz" };
+                // finally add one and remove 2
+                arguments = new[] { "edit", "1", "tag:bug,-bar,-baz" };
 
-            args = ExecuteTestCommand(path, arguments);
+                args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-            ((Tag[])args["add"]).Should().Contain(new[] { new Tag("bug") });
-            ((Tag[])args["remove"]).Should().Contain(new[] { new Tag("bar"), new Tag("baz") });
-
-            Directory.Delete(path, true);
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+                ((Tag[])args["add"]).Should().Contain(new[] { new Tag("bug") });
+                ((Tag[])args["remove"]).Should().Contain(new[] { new Tag("bar"), new Tag("baz") });
+            });
         }
 
         [Test]
         public void TestAddCommentCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
-            Directory.CreateDirectory(Path.Combine(path, "#1"));
-            var text = new[]
+            TestHelper.ExecuteInNewDirectory(path =>
             {
-                "[Issue]",
-                "Title=hello",
-                "Message=",
-                "Tags=",
-                "PostDate=131416916119635597",
-                "Author=Contoso",
-                "State=Open",
-                "CommentCount=0",
-                "LastStateChangeCommentIndex=-1"
-            };
-            File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
+                Directory.CreateDirectory(Path.Combine(path, "#1"));
+                var text = new[]
+                {
+                    "[Issue]",
+                    "Title=hello",
+                    "Message=",
+                    "Tags=",
+                    "PostDate=131416916119635597",
+                    "Author=Contoso",
+                    "State=Open",
+                    "CommentCount=0",
+                    "LastStateChangeCommentIndex=-1"
+                };
+                File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
 
-            var arguments = new[] { "comment", "1", "-m", "my comment" };
+                var arguments = new[] { "comment", "1", "-m", "my comment" };
 
-            var args = ExecuteTestCommand(path, arguments);
+                var args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-
-            Directory.Delete(path, true);
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+            });
         }
 
         [Test]
         public void TestShowIssueCommand()
         {
-            // setup
-            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            Directory.CreateDirectory(path);
-            File.WriteAllText(Path.Combine(path, ".issues"), "");
-            Directory.CreateDirectory(Path.Combine(path, "#1"));
-            var text = new[]
+            TestHelper.ExecuteInNewDirectory(path =>
             {
-                "[Issue]",
-                "Title=hello",
-                "Message=",
-                "Tags=",
-                "PostDate=131416916119635597",
-                "Author=Contoso",
-                "State=Open",
-                "CommentCount=0",
-                "LastStateChangeCommentIndex=-1"
-            };
-            File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
+                File.WriteAllText(Path.Combine(path, ".issues"), "");
+                Directory.CreateDirectory(Path.Combine(path, "#1"));
+                var text = new[]
+                {
+                    "[Issue]",
+                    "Title=hello",
+                    "Message=",
+                    "Tags=",
+                    "PostDate=131416916119635597",
+                    "Author=Contoso",
+                    "State=Open",
+                    "CommentCount=0",
+                    "LastStateChangeCommentIndex=-1"
+                };
+                File.WriteAllLines(Path.Combine(path, "#1\\issue.ini"), text);
 
-            var arguments = new[] { "show", "1" };
+                var arguments = new[] { "show", "1" };
 
-            var args = ExecuteTestCommand(path, arguments);
+                var args = ExecuteTestCommand(path, arguments);
 
-            args.Should().ContainKey("id");
-            args["id"].Should().Be(1);
-
-            Directory.Delete(path, true);
+                args.Should().ContainKey("id");
+                args["id"].Should().Be(1);
+            });
         }
 
         /// <summary>
