@@ -1,13 +1,15 @@
-﻿using FluentAssertions;
-using NUnit.Framework;
-using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using FluentAssertions;
+using NUnit.Framework;
 
-namespace IssueTracker.Tests
+namespace IssueTracker.Tests.Units
 {
+    /// <summary>
+    /// Asserts that the command line arguments invoke the correct target methods but fully ignores what those commands actually do.
+    /// </summary>
     [TestFixture]
     public class CommandLineTests
     {

@@ -1,9 +1,9 @@
-﻿using FluentAssertions;
-using NUnit.Framework;
 using System;
 using System.IO;
+using FluentAssertions;
+using NUnit.Framework;
 
-namespace IssueTracker.Tests
+namespace IssueTracker.Tests.Units
 {
     [TestFixture]
     public class StorageTests
