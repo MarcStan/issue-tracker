@@ -187,7 +187,14 @@ namespace IssueTracker
         /// <param name="tags">Optional.</param>
         public virtual void AddIssue(string title, string message, Tag[] tags)
         {
-            throw new NotImplementedException();
+            AssertIssueTracker();
+
+            // TODO: inefficient to always load all isses when adding a new issue. maybe store ID in .issues file
+            var all = Storage.LoadIssues();
+            var maxId = all.Any() ? all.Max(i => i.Id) : 0;
+            var issue = new Issue(maxId + 1, title, message, tags, DateTime.Now, CurrentUser, null, IssueState.Open, -1);
+            Storage.SaveIssue(issue, true);
+            Console.WriteLine($"Created issue '#{issue.Id}' {issue.Title}");
         }
 
         /// <summary>
