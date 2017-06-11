@@ -4,6 +4,7 @@ using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace IssueTracker.Tests
 {
@@ -58,6 +59,73 @@ namespace IssueTracker.Tests
             Directory.Delete(path, true);
         }
 
+        [Test]
+        public void TestListCommand()
+        {
+            // setup
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path, ".issues"), "");
+
+            var arguments = new[] { "list" };
+
+            var args = ExecuteTestCommand(path, arguments);
+            // if no filters are provided a default filter of "open issues only" is applied
+            args.Should().ContainKey("filters");
+
+            var filters = (List<FilterValue>)args["filters"];
+            filters.Should().HaveCount(1);
+            var state = filters.FirstOrDefault(f => f.FilterType == Filter.IssueState);
+            state.Should().NotBeNull();
+            state.Value.Should().Be(IssueState.Open);
+
+            Directory.Delete(path, true);
+        }
+
+        [Test]
+        public void TestListCommandWithFilters()
+        {
+            // setup
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path, ".issues"), "");
+
+            // filter order shouldn't matter
+            var permutations = new[]
+            {
+                new[] {"list", "open", "user:me", "tag:foo"},
+                new[] {"list", "user:me", "state:open", "tag:foo" },
+                new[] {"list", "user:me", "tag:foo", "--state:open"},
+                new[] {"list", "/tag:foo", "user:me", "open"},
+                new[] {"list", "tag:foo", "open", "user:me" }
+            };
+
+            foreach (var p in permutations)
+            {
+                var args = ExecuteTestCommand(path, p);
+                args.Should().ContainKey("filters");
+
+                var filters = (List<FilterValue>)args["filters"];
+                filters.Should().HaveCount(3);
+                var state = filters.FirstOrDefault(f => f.FilterType == Filter.IssueState);
+                state.Should().NotBeNull();
+                var user = filters.FirstOrDefault(f => f.FilterType == Filter.User);
+                user.Should().NotBeNull();
+                var tag = filters.FirstOrDefault(f => f.FilterType == Filter.Tag);
+                tag.Should().NotBeNull();
+
+                state.Value.Should().Be(IssueState.Open);
+                user.Value.Should().Be("me");
+                var tags = (Tag[])tag.Value;
+                tags.Should().HaveCount(1);
+                tags[0].Name.Should().Be("foo");
+            }
+
+            Directory.Delete(path, true);
+        }
+
         /// <summary>
         /// Helper method that executes the commands using the <see cref="MockIssueTracker"/> and reports back the values it returned.
         /// </summary>
@@ -66,7 +134,6 @@ namespace IssueTracker.Tests
         /// <returns></returns>
         private static Dictionary<string, object> ExecuteTestCommand(string workingDirectory, string[] arguments)
         {
-
             var mock = new MockIssueTracker(workingDirectory);
             Dictionary<string, object> argsReceived = null;
             mock.OnMethodCalled += (sender, args) =>
