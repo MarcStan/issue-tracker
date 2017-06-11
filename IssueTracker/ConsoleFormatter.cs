@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -25,6 +26,12 @@ namespace IssueTracker
         /// </remarks>
         public static string PadElementsInLines(List<string[]> lines, int padding = 1)
         {
+            if (lines == null)
+                throw new ArgumentNullException(nameof(lines));
+
+            if (lines.Count == 0)
+                return string.Empty;
+
             // Calculate maximum numbers for each element accross all lines
             var numElements = lines[0].Length;
             var maxValues = new int[numElements];
