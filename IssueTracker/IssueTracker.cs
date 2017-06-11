@@ -59,6 +59,9 @@ namespace IssueTracker
         /// <param name="filters"></param>
         public virtual void ListIssues(List<FilterValue> filters)
         {
+            if (filters == null)
+                throw new ArgumentNullException(nameof(filters));
+
             AssertIssueTracker();
 
             var issues = Storage.LoadIssues();
@@ -93,6 +96,8 @@ namespace IssueTracker
         /// <param name="id"></param>
         public virtual void ReopenIssue(int id)
         {
+            AssertIssueTracker();
+
             ChangeIssueState(id, IssueState.Reopened);
         }
 
@@ -102,6 +107,8 @@ namespace IssueTracker
         /// <param name="id"></param>
         public virtual void CloseIssue(int id)
         {
+            AssertIssueTracker();
+
             ChangeIssueState(id, IssueState.Closed);
         }
 
@@ -111,6 +118,8 @@ namespace IssueTracker
         /// <param name="id"></param>
         public virtual void ShowIssue(int id)
         {
+            AssertIssueTracker();
+
             var issues = Storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
@@ -146,6 +155,9 @@ namespace IssueTracker
         /// <param name="remove"></param>
         public virtual void EditTags(int id, Tag[] add, Tag[] remove)
         {
+            if (add == null || remove == null)
+                throw new ArgumentNullException();
+
             AssertIssueTracker();
 
             var issues = Storage.LoadIssues();
@@ -228,6 +240,8 @@ namespace IssueTracker
         /// <param name="message"></param>
         public virtual void CommentIssue(int id, string message)
         {
+            AssertIssueTracker();
+
             var issues = Storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
