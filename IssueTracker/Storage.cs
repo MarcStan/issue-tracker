@@ -13,7 +13,7 @@ namespace IssueTracker
         /// </summary>
         /// <param name="issue"></param>
         /// <param name="isNew">If true will assert that no other issue with this id exists. If false just overwrites the existing one.</param>
-        public static void SaveIssue(Issue issue, bool isNew = true)
+        public static void SaveIssue(Issue issue, bool isNew)
         {
             var tDir = "#" + issue.Id;
             if (isNew && Directory.Exists(tDir))
@@ -74,7 +74,7 @@ namespace IssueTracker
             return issues;
         }
 
-        private static Issue LoadIssue(string directory)
+        internal static Issue LoadIssue(string directory)
         {
             var dName = new DirectoryInfo(directory).Name;
             if (!dName.StartsWith("#"))
@@ -101,7 +101,7 @@ namespace IssueTracker
                 tags = t.Select(v => new Tag(v)).ToArray();
             }
             var dt = sec.Keys["PostDate"].Value;
-            var date = DateTime.FromFileTimeUtc(long.Parse(dt));
+            var date = DateTime.FromFileTimeUtc(long.Parse(dt)).ToLocalTime();
             var author = sec.Keys["Author"].Value;
             var state = (IssueState)Enum.Parse(typeof(IssueState), sec.Keys["State"].Value);
             var comments = new List<Comment>();
@@ -130,7 +130,7 @@ namespace IssueTracker
             var sec = ini.Sections["Comment"];
             var message = sec.Keys["Message"].Value;
             var dt = sec.Keys["CommentDate"].Value;
-            var date = DateTime.FromFileTimeUtc(long.Parse(dt));
+            var date = DateTime.FromFileTimeUtc(long.Parse(dt)).ToLocalTime();
             var author = sec.Keys["Author"].Value;
             var editable = bool.Parse(sec.Keys["Editable"].Value);
             var changedState = sec.Keys["ChangedStateTo"]?.Value;
