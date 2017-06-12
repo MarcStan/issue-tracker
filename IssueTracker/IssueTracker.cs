@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MadMilkman.Ini;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +13,8 @@ namespace IssueTracker
     public class IssueTracker
     {
         private readonly string _workingDirectory;
-        private const string RootFile = ".issues";
+        private const string RootFileName = ".issues";
+
         private readonly Storage _storage;
 
         /// <summary>
@@ -29,6 +31,11 @@ namespace IssueTracker
         }
 
         /// <summary>
+        /// Gets the fully qualified path for the root file.
+        /// </summary>
+        public string RootFile => Path.Combine(_workingDirectory, RootFileName);
+
+        /// <summary>
         /// Returns the current user name as found in the .gitconfig.
         /// </summary>
         public virtual string CurrentUser => GitHelper.GetUserName();
@@ -36,7 +43,7 @@ namespace IssueTracker
         /// <summary>
         /// Gets whether the working directory is an issue tracker.
         /// </summary>
-        public virtual bool WorkingDirectoryIsIssueTracker => File.Exists(Path.Combine(_workingDirectory, RootFile));
+        public virtual bool WorkingDirectoryIsIssueTracker => File.Exists(RootFile);
 
         /// <summary>
         /// Creates a new project in the current directory.
@@ -49,7 +56,7 @@ namespace IssueTracker
                 return;
             }
             var user = CurrentUser;
-            File.WriteAllText(Path.Combine(_workingDirectory, RootFile), $"owner={user}");
+            File.WriteAllText(RootFile, $"owner={user}{Environment.NewLine}title");
 
             Console.WriteLine($"New issue project created for owner {user}!");
         }
@@ -81,7 +88,38 @@ namespace IssueTracker
                 return;
             }
             Console.WriteLine($"Found {issues.Count} matching issues:");
-            PrintIssueList(issues);
+            Console.WriteLine();
+            PrintIssueList(issues, TitleLimit);
+        }
+
+        /// <summary>
+        /// Returns the title trim value from the .issues file.
+        /// </summary>
+        public int TitleLimit
+        {
+            get
+            {
+                try
+                {
+                    using (var reader = File.OpenRead(RootFile))
+                    using (var stream = new MemoryStream())
+                    {
+                        reader.CopyTo(stream);
+                        stream.Seek(0, SeekOrigin.Begin);
+                        var ini = new IniFile();
+                        ini.Load(stream);
+
+                        var value = ini.Sections.First().Keys["titleTrim"]?.Value;
+                        return int.Parse(value);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Failure while looking up titleTrim in {RootFileName} file. " + e.Message);
+                    Console.WriteLine();
+                    return 50;
+                }
+            }
         }
 
         private void AssertIssueTracker()
@@ -258,8 +296,12 @@ namespace IssueTracker
         /// Prints the list of issues in a human readable fashion.
         /// </summary>
         /// <param name="issues"></param>
-        private static void PrintIssueList(List<Issue> issues)
+        /// <param name="titleLimit">Optional. Allows title to be trimmed to a length</param>
+        private static void PrintIssueList(List<Issue> issues, int? titleLimit = null)
         {
+            if (titleLimit.HasValue && titleLimit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(titleLimit));
+
             var formatted = new List<string[]>();
             foreach (var i in issues)
             {
@@ -267,11 +309,16 @@ namespace IssueTracker
 
                 var cc = i.Comments.Count(c => c.Editable);
                 var comments = cc > 0 ? $" ({cc} comments)" : "";
+                var title = i.Title;
+                if (titleLimit.HasValue && title.Length > titleLimit.Value)
+                {
+                    title = title.Substring(0, titleLimit.Value) + "..";
+                }
                 formatted.Add(new[]
                 {
                     $"#{i.Id}",
                     $"[{i.State}]",
-                    $"'{i.Title}'",
+                    $"'{title}'",
                     "created by " + i.Author,
                     $"@ {i.CreationDate.ToShortDateString()}",
                     comments,

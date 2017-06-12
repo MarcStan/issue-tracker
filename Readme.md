@@ -12,6 +12,16 @@ Works perfectly for single developers. Can also work for 2-3 developers if the d
 
 See [Spec.md](Spec.md) for all commands.
 
+## Recommended layout
+
+The default console is only 80 characters wide but the issue tracker works best with 120 characters.
+
+Rightclick on the console titlebar -> Properties. Switch to "Layout" tab and set both "Window Size Width" and "Screen Buffer Size Width" to 120.
+
+Enjoy a better console experience.
+
+If you must absolutely insist on 80 characters, you can edit the titleTrim property of the ".issues" file to further decrease title width when listing all issues.
+
 ## Quickstart
 
 Place the issue tracker exe somewhere, add it to windows PATH and name it the way you want (issue.exe, it.exe, tracker.exe, ...). For now it is assumed to be called "issue.exe".
