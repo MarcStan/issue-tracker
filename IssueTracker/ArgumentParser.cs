@@ -53,7 +53,6 @@ namespace IssueTracker
             {
                 AcceptEqualSignSyntaxForValueArguments = true
             };
-            parser.AdditionalArgumentsSettings.AcceptAdditionalArguments = false;
 
             parser.Arguments.Add(_addTitle);
             parser.Arguments.Add(_addMessage);
@@ -107,10 +106,6 @@ namespace IssueTracker
                     }
                 }
             }
-            catch (CommandLineFormatException)
-            {
-                Console.WriteLine("Unsupported arguments found on the command line. Use --help for help!");
-            }
             catch (CommandLineException e)
             {
                 Console.WriteLine(e.Message);
@@ -120,8 +115,8 @@ namespace IssueTracker
         /// <summary>
         /// Fixes arguments so they pass the commandline libraries arbitrary specification
         /// It wants --tag=foo or /tag=foo but it cannot be tag=foo (no prefix) or --tag:foo (: seperator)
-        /// 
-        /// So this adds the prefix where necessary and replaces : with =
+        /// At least it loads --tag foo.
+        /// So this adds the prefix where necessary and replaces : with =. It also doesn't modify values such as foo in "--tag foo" if "tag" is one of the supported arguments (checks both long and short form).
         /// additionally I really like the "issues open tag:foo" syntax but that isn't supported either
         /// so instead it has to be "issues --state=open --tag:foo"
         /// -> if we detect any of the state values, prepend with state= as well
@@ -426,6 +421,7 @@ namespace IssueTracker
         /// <summary>
         /// Ensures that only valid second class arguments are parsed for the given first class argument.
         /// If any argument was parsed that wasn't part of the allowedArgs an exception is thrown.
+        /// Also ensures that no values are unparsed  (e.g definitely-not-a-command=foobar).
         /// </summary>
         /// <param name="parser"></param>
         /// <param name="firstArgument"></param>
@@ -442,6 +438,10 @@ namespace IssueTracker
             if (parsed.Any(p => !allowedArgs.Contains(p)))
             {
                 throw new CommandLineException("Invalid command format. Use 'help' for more information.");
+            }
+            if (parser.AdditionalArgumentsSettings.AdditionalArguments.Any())
+            {
+                throw new CommandLineException($"Found unsupported arguments: {string.Join(", ", parser.AdditionalArgumentsSettings.AdditionalArguments)}");
             }
         }
 
