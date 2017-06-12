@@ -19,7 +19,7 @@ namespace IssueTracker
         {
             Description = "Filters the list for the specific user"
         };
-        private static readonly EnumeratedValueArgument<string> _stateArgument = new EnumeratedValueArgument<string>('s', "state", "Filters the list for the specific state.", new[] { "open", "closed", "all" });
+        private static readonly EnumeratedValueArgument<string> _stateArgument = new EnumeratedValueArgument<string>('s', "state", "Filters the list for the specific state (all|open|closed).", new[] { "open", "closed", "all" });
 
         /// <summary>
         /// A helper dicitionary definiting the relationship between first class and secondclass arguments.
@@ -27,6 +27,7 @@ namespace IssueTracker
         /// </summary>
         private static readonly Dictionary<string, Argument[]> _allowedArguments = new Dictionary<string, Argument[]>
         {
+            {"init", new Argument[0] },
             {"list", new Argument[] { _tag, _user, _stateArgument } },
             {"add", new Argument[] {_addTitle, _addMessage, _tag} },
             {"edit", new Argument[] {_tag} },
@@ -34,6 +35,18 @@ namespace IssueTracker
             {"show", new Argument[0] },
             {"close", new Argument[0] },
             {"reopen", new Argument[0] }
+        };
+
+        /// <summary>
+        /// Set of commands that require format "command int:id [optional]".
+        /// </summary>
+        private static readonly HashSet<string> _commandsWithIssueIdRequiurement = new HashSet<string>
+        {
+            "edit",
+            "comment",
+            "show",
+            "close",
+            "reopen"
         };
 
         /// <summary>
@@ -67,7 +80,7 @@ namespace IssueTracker
             {
                 // we asserted that there is at least one argument
                 var firstArg = args[0].ToLower();
-                if (IsHelp(firstArg))
+                if (IsHelp(firstArg) || !_allowedArguments.ContainsKey(firstArg))
                 {
                     DisplayHelp(parser);
                 }
@@ -333,7 +346,7 @@ namespace IssueTracker
         /// <param name="issueTracker"></param>
         private static void ProcessCommandsWithIssueId(string[] args, CommandLineParser.CommandLineParser parser, IssueTracker issueTracker)
         {
-            if (!_allowedArguments.ContainsKey(args[0].ToLower()))
+            if (!_commandsWithIssueIdRequiurement.Contains(args[0].ToLower()))
                 throw new CommandLineException($"Command {args[0]} is not supported!");
 
             // requires a second argument which is the issue id
@@ -447,7 +460,20 @@ namespace IssueTracker
 
         private static void DisplayHelp(CommandLineParser.CommandLineParser parser)
         {
-            // TODO: display first class commands
+            var lines = new List<string[]>();
+            foreach (var arg in _allowedArguments)
+            {
+                lines.Add(new[]
+                {
+                    arg.Key,
+                    _commandsWithIssueIdRequiurement.Contains(arg.Key) ? "id":"",
+                    string.Join(", ", arg.Value.Select(a => "--" + a.LongName))
+                });
+            }
+            Console.WriteLine("Supported commands:");
+
+            Console.WriteLine(ConsoleFormatter.PadElementsInLines(lines));
+
             Console.WriteLine();
             Console.WriteLine("Optional arguments:");
             // these commands are second class only
