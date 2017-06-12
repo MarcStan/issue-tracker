@@ -53,6 +53,7 @@ namespace IssueTracker
             {
                 AcceptEqualSignSyntaxForValueArguments = true
             };
+            parser.AdditionalArgumentsSettings.AcceptAdditionalArguments = false;
 
             parser.Arguments.Add(_addTitle);
             parser.Arguments.Add(_addMessage);
@@ -106,9 +107,13 @@ namespace IssueTracker
                     }
                 }
             }
+            catch (CommandLineFormatException)
+            {
+                Console.WriteLine("Unsupported arguments found on the command line. Use --help for help!");
+            }
             catch (CommandLineException e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine(e.Message);
             }
         }
 
@@ -283,6 +288,7 @@ namespace IssueTracker
             // ensure the user didn't call bullshit on the commandline
             // e.g. "list user:name -title "foobar"
             AssertNoWrongArgsWhereParsed(parser, args[0]);
+
             var filters = new List<FilterValue>();
             if (_tag.Parsed)
             {
@@ -320,6 +326,7 @@ namespace IssueTracker
                 // default to open issues by default
                 filters.Add(new FilterValue(Filter.IssueState, IssueState.Open));
             }
+
             issueTracker.ListIssues(filters);
         }
 
