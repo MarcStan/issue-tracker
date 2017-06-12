@@ -72,12 +72,8 @@ namespace IssueTracker
                 throw new NotSupportedException("Each filter type may only be used once!");
 
             var issues = _storage.LoadIssues();
-            bool stateWasFiltered = false;
             foreach (var f in filters)
             {
-                if (f.FilterType == Filter.IssueState)
-                    stateWasFiltered = true;
-
                 ApplyFilter(f, issues);
             }
             if (!issues.Any())
@@ -86,9 +82,7 @@ namespace IssueTracker
                 return;
             }
             Console.WriteLine($"Found {issues.Count} matching issues:");
-            // if a statefilter exists, only the specific state will be displayed -> no point in printing it again in each line
-            // the user will only care if the issues are mixed (open and closed isses)
-            PrintIssueList(issues, stateWasFiltered);
+            PrintIssueList(issues);
         }
 
         private void AssertIssueTracker()
@@ -265,8 +259,7 @@ namespace IssueTracker
         /// Prints the list of issues in a human readable fashion.
         /// </summary>
         /// <param name="issues"></param>
-        /// <param name="displayState">If true the state (open/closed) of each issue will be displayed.</param>
-        private static void PrintIssueList(List<Issue> issues, bool displayState)
+        private static void PrintIssueList(List<Issue> issues)
         {
             var formatted = new List<string[]>();
             foreach (var i in issues)
@@ -278,7 +271,7 @@ namespace IssueTracker
                 formatted.Add(new[]
                 {
                     $"#{i.Id}",
-                    displayState ? $"[{i.State}]" : "",
+                    $"[{i.State}]",
                     $"'{i.Title}'",
                     "created by " + i.Author,
                     $"@ {i.CreationDate.ToShortDateString()}",
@@ -371,7 +364,7 @@ namespace IssueTracker
         private static void DisplayIssue(Issue issue)
         {
             // use same format as list for the header
-            PrintIssueList(new List<Issue> { issue }, true);
+            PrintIssueList(new List<Issue> { issue });
             // breakline
 
             int width;
