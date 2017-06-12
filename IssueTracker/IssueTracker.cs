@@ -323,7 +323,7 @@ namespace IssueTracker
                     break;
                 case Filter.User:
                     var user = filter.Value.ToString();
-                    issues.RemoveAll(i => i.Author.Equals(user, StringComparison.InvariantCultureIgnoreCase));
+                    issues.RemoveAll(i => !i.Author.Equals(user, StringComparison.InvariantCultureIgnoreCase));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
