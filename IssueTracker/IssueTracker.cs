@@ -293,7 +293,7 @@ namespace IssueTracker
             {
                 case Filter.Tag:
                     var tags = (Tag[])filter.Value;
-                    issues.RemoveAll(i => i.Tags.ContainsAll(tags));
+                    issues.RemoveAll(i => !i.Tags.ContainsAll(tags));
                     break;
                 case Filter.IssueState:
                     var s = (IssueState)filter.Value;
