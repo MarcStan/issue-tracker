@@ -1,5 +1,4 @@
-﻿using IssueTracker.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -293,7 +292,15 @@ namespace IssueTracker
             {
                 case Filter.Tag:
                     var tags = (Tag[])filter.Value;
-                    issues.RemoveAll(i => !i.Tags.ContainsAll(tags));
+                    issues.RemoveAll(i =>
+                    {
+                        foreach (var t in tags)
+                        {
+                            if (!i.Tags.Contains(t))
+                                return true;
+                        }
+                        return false;
+                    });
                     break;
                 case Filter.IssueState:
                     var s = (IssueState)filter.Value;

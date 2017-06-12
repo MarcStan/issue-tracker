@@ -67,7 +67,6 @@
     <Compile Include="Comment.cs" />
     <Compile Include="ConsoleEx.cs" />
     <Compile Include="ConsoleFormatter.cs" />
-    <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Filter.cs" />
     <Compile Include="FilterValue.cs" />
