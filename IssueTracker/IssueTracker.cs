@@ -394,6 +394,7 @@ namespace IssueTracker
             if (issue.State == targetState)
             {
                 // nothing to do
+                Console.WriteLine("Already the case!");
                 return;
             }
 
@@ -405,7 +406,7 @@ namespace IssueTracker
                 ChangedStateTo = targetState
             });
             _storage.SaveIssue(issue, false);
-            Console.WriteLine($"Issue '#{id}' {targetState.ToString().ToLower()}!", ConsoleColor.Green);
+            Console.WriteLine($"Issue '#{id}' {targetState.ToString().ToLower()}!");
         }
 
         /// <summary>
