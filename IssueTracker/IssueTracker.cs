@@ -14,7 +14,7 @@ namespace IssueTracker
     {
         private readonly string _workingDirectory;
         private const string RootFile = ".issues";
-        private Storage _storage;
+        private readonly Storage _storage;
 
         /// <summary>
         /// Creates a new instance that works in the provided directory.
@@ -99,7 +99,7 @@ namespace IssueTracker
         {
             AssertIssueTracker();
 
-            ChangeIssueState(id, IssueState.Reopened);
+            ChangeIssueState(id, IssueState.Open);
         }
 
         /// <summary>
@@ -299,9 +299,7 @@ namespace IssueTracker
                     var s = (IssueState)filter.Value;
                     issues.RemoveAll(i =>
                     {
-                        // remove all open issues; either open or reopened
-                        if ((s == IssueState.Open || s == IssueState.Reopened) &&
-                            (i.State == IssueState.Open || i.State == IssueState.Reopened))
+                        if (s == IssueState.Open && i.State == IssueState.Open)
                         {
                             // don't remove open issues, that's all we want
                             return false;
@@ -332,9 +330,6 @@ namespace IssueTracker
         /// <param name="targetState"></param>
         private void ChangeIssueState(int id, IssueState targetState)
         {
-            if (targetState == IssueState.Open)
-                throw new NotSupportedException("Issues can only be closed or reopenend.");
-
             var issues = _storage.LoadIssues();
             var issue = issues.FirstOrDefault(i => i.Id == id);
             if (issue == null)
@@ -348,8 +343,10 @@ namespace IssueTracker
                 return;
             }
 
+
+            var localizedState = targetState == IssueState.Open ? "Reopenend" : "Closed";
             // adding comment with changestate will change the issue state
-            issue.Add(new Comment($"{targetState} the issue.", CurrentUser, DateTime.Now, false)
+            issue.Add(new Comment($"{localizedState} the issue.", CurrentUser, DateTime.Now, false)
             {
                 ChangedStateTo = targetState
             });

@@ -12,10 +12,6 @@
         /// <summary>
         /// Issue is closed.
         /// </summary>
-        Closed = 1,
-        /// <summary>
-        /// Issue is open (but was closed previously).
-        /// </summary>
-        Reopened = 2
+        Closed = 1
     }
 }
