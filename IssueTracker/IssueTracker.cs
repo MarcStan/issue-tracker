@@ -56,7 +56,7 @@ namespace IssueTracker
                 return;
             }
             var user = CurrentUser;
-            File.WriteAllText(RootFile, $"owner={user}{Environment.NewLine}title");
+            File.WriteAllText(RootFile, $"owner={user}{Environment.NewLine}titleTrim=50");
 
             Console.WriteLine($"New issue project created for owner {user}!");
         }

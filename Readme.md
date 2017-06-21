@@ -8,6 +8,16 @@ Works perfectly for single developers. Can also work for 2-3 developers if the d
 
 **May** work with cloud sync (OneDrive, GDrive, Box, ..) for solo use. Afterall its all just textfiles.
 
+# Getting started
+
+msbuild.exe must be in system PATH in order to execute build.cmd (Alternatively just build from Visual Studio).
+
+The msbuild path for VS2017 is "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin" (replace Community with Professional/Enterprise depending on the version you have).
+
+For previous versions the path was: "C:\Program Files (x86)\MSBuild\14.0\Bin" (where 14.0 is VS2015).
+
+Pick the correct path for msbuild and add it to the path by setting the environment variable (Start -> type "edit environment variables for your account").
+
 # Usage
 
 See [Spec.md](Spec.md) for all commands.
@@ -46,3 +56,8 @@ Close issue:
 # Changelog
 
 See [Changelog.md](Changelog.md) for all versions/changes.
+
+# Roadmap
+
+* Add pretty UI wrapper
+* (Possibly) plug into github/gitlab/tfs APIs to pull data and display locally (either cache offline + display or always query live)
