@@ -477,9 +477,12 @@ namespace IssueTracker
             var allArgs = parser.Arguments;
 
             var parsed = allArgs.Where(a => a.Parsed).ToList();
-            if (parsed.Any(p => !allowedArgs.Contains(p)))
+            var unsupported = parsed.Where(p => !allowedArgs.Contains(p)).ToList();
+            if (unsupported.Any())
             {
-                throw new CommandLineException("Invalid command format. Use 'help' for more information.");
+                throw new CommandLineException($"Invalid command format. Command{(unsupported.Count > 1 ? "s" : "")} " +
+                                               $"'{string.Join(", ", unsupported.Select(p => "--" + p.LongName))}' " +
+                                               $"not supported with '{firstArgument}' Use 'help' for more information.");
             }
             if (parser.AdditionalArgumentsSettings.AdditionalArguments.Any())
             {
