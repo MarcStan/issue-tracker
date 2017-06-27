@@ -67,6 +67,7 @@
     <Compile Include="Units\CommandLineTests.cs" />
     <Compile Include="Integration\IssueTrackerTests.cs" />
     <Compile Include="MockIssueTracker.cs" />
+    <Compile Include="Units\ParserTests.cs" />
     <Compile Include="Units\StorageTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
