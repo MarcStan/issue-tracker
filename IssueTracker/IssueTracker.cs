@@ -415,9 +415,6 @@ namespace IssueTracker
         /// <param name="issue"></param>
         private static void DisplayIssue(Issue issue)
         {
-            // use same format as list for the header
-            PrintIssueList(new List<Issue> { issue });
-            // breakline
 
             int width;
             if (!ConsoleEx.GetConsoleWindowWidth(out width))
@@ -427,6 +424,17 @@ namespace IssueTracker
                 width = 80;
             }
 
+            var hwrap = new string('=', width);
+            // header
+            var title = $" ISSUE #{issue.Id} ";
+            int start = (width - title.Length) / 2;
+            title = new string('=', start) + title;
+            Console.Write(hwrap);
+            Console.Write(title + new string('=', width - title.Length));
+            Console.WriteLine(hwrap);
+            // use same format as list for the header
+            PrintIssueList(new List<Issue> { issue });
+            // breakline
             var wrap = new string('_', width);
             Console.WriteLine(wrap);
 
