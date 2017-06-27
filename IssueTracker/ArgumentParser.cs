@@ -74,8 +74,37 @@ namespace IssueTracker
             parser.Arguments.Add(_user);
             parser.Arguments.Add(_stateArgument);
 
-            var newArgs = ConvertArgumentsIntoAcceptableFormat(args, parser.Arguments.ToArray(), 1);
-            args = newArgs;
+            // check if first value is a digit, if so it must be a shortcut command; treat those specially
+            if (int.TryParse(args[0], out int _))
+            {
+                // support for shortcut commands. these all start with the issue # upfront
+                //      "issue.exe show 1" -> "issue.exe 1",
+                //      "issue.exe edit 1 tag:foo" -> "issue.exe 1 tag:foo",
+                //      "issue.exe comment 1 -m "comment"" -> "issue.exe 1 -m "comment""
+                // since there is only 3 types, check for them manually
+                var newArgs = new string[args.Length + 1];
+                Array.Copy(args, 0, newArgs, 1, args.Length);
+
+                // since we only support a limited set of arguments, this basic check will be enough for now
+
+                // message has shortform '-m', so check for any arg starting with m
+                var hasComment = args.Any(a => a.TrimStart('-', '/').StartsWith("m"));
+                var hasTag = args.Any(a => a.TrimStart('-', '/').StartsWith("tag"));
+                if (hasComment)
+                {
+                    newArgs[0] = "comment";
+                }
+                else if (hasTag)
+                {
+                    newArgs[0] = "edit";
+                }
+                else
+                {
+                    newArgs[0] = "show";
+                }
+                args = newArgs;
+            }
+            args = ConvertArgumentsIntoAcceptableFormat(args, parser.Arguments.ToArray(), 1);
             try
             {
                 // we asserted that there is at least one argument

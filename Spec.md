@@ -97,3 +97,41 @@ Close the issue:
 
 Reopen it:
 >issue reopen 1
+
+## Shortcuts
+
+It is possible to use special shortcuts without a keyword.
+
+The following commands can also be used without their keywords: show, edit & comment.
+
+Examples:
+
+> issue show 1
+
+can also be written as:
+
+> issue 1
+
+Likewise:
+
+> issue edit 1 tag:-remove,add
+
+can be written as
+
+> issue 1 tag:-remove,add
+
+And finally:
+
+> issue comment 1 -m "comment"
+
+can be written as:
+
+> issue 1 -m "comment"
+
+These shortcuts work by detecting the commands after the digit.
+
+If only a digit is provided, it is assumed the user means "show".
+
+If only the tag command is provided, it is assumed the user means "edit".
+
+If only the message command is provided, it is assumed the user means "comment".
