@@ -8,6 +8,10 @@ Works perfectly for single developers. Can also work for 2-3 developers if the d
 
 **May** work with cloud sync (OneDrive, GDrive, Box, ..) for solo use. Afterall its all just textfiles.
 
+# Download
+
+Either clone the repo or [go to the tags](https://gitlab.com/MarcStan/IssueTracker/tags) to download precompiled binaries.
+
 # Getting started
 
 msbuild.exe must be in system PATH in order to execute build.cmd (Alternatively just build from Visual Studio).
