@@ -449,14 +449,15 @@ namespace IssueTracker
                 var c = issue.Comments[i];
                 var time = c.DateTime;
                 string ts;
-                if (time.Date == issue.CreationDate.Date)
+                var now = DateTime.Now.Date;
+                if (time.Date == now)
                 {
                     // same day, just timestamp is fine
                     ts = time.ToShortTimeString();
                 }
                 else
                 {
-                    if ((time - issue.CreationDate).TotalDays > 7)
+                    if ((now - time).TotalDays > 7)
                     {
                         // anything older than a week just needs day
                         ts = time.ToShortDateString();
