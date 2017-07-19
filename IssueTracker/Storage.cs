@@ -87,6 +87,7 @@ namespace IssueTracker
                 }
                 issues.Add(i);
             }
+            issues.Sort((a, b) => a.Id.CompareTo(b.Id));
             return issues;
         }
 

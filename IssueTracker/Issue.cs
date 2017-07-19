@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace IssueTracker
 {
     /// <summary>
     /// Container for a single issue.
     /// </summary>
+    [DebuggerDisplay("{Id} {Title}")]
     public class Issue
     {
         private readonly List<Comment> _comments = new List<Comment>();
