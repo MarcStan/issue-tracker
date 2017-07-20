@@ -1,3 +1,8 @@
+**1.1.1**
+
+* made comment time relative to now instead of issue creation date
+* issues are now correctly sorted by ID
+
 **1.1.0**
 
 Added header format when displaying single issue (better visibility where the issue starts).
