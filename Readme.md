@@ -10,7 +10,7 @@ Works perfectly for single developers. Can also work for 2-3 developers if the d
 
 # Download
 
-Either clone the repo or [go to the tags](https://gitlab.com/MarcStan/IssueTracker/tags) to download precompiled binaries.
+Either clone the repo or [go to the tags](https://github.com/MarcStan/IssueTracker/tags) to download precompiled binaries.
 
 # Getting started
 
